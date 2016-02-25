@@ -1,33 +1,18 @@
 import numpy as np 
 import os, imp
 from Florence import Mesh, BoundaryCondition, LinearSolver, FEMSolver
-from Florence.MaterialLibrary import *
-
 
 def ProblemData(MainData):
 
-    MainData.ndim = 2    
+    MainData.ndim = 2
     MainData.Fields = 'Mechanics'    
     MainData.Formulation = 'DisplacementApproach'
     MainData.Analysis = 'Static'
-    MainData.AnalysisType = 'Linear'
-    # MainData.AnalysisType = 'Nonlinear'
-
-
-    # material = LinearModel(MainData.ndim,youngs_modulus=1.0e01,poissons_ratio=0.3)
-    material = IncrementalLinearElastic(MainData.ndim,youngs_modulus=1.,poissons_ratio=0.3)
-    # material = NeoHookean_2(MainData.ndim,youngs_modulus=1.,poissons_ratio=0.3)
-    # material = MooneyRivlin(MainData.ndim,youngs_modulus=1.,poissons_ratio=0.3)
-    # material = NearlyIncompressibleMooneyRivlin(MainData.ndim,youngs_modulus=1.,poissons_ratio=0.3)
-    # material = BonetTranservselyIsotropicHyperElastic(MainData.ndim,youngs_modulus=1.,poissons_ratio=0.3,
-        # E_A=2.5,G_A=0.5)
-    # material = TranservselyIsotropicLinearElastic(MainData.ndim,youngs_modulus=1.,poissons_ratio=0.3,
-        # E_A=2.5,G_A=0.5)
+    MainData.AnalysisType = 'Nonlinear'
 
 
     ProblemPath = os.path.dirname(os.path.realpath(__file__))
     filename = ProblemPath + '/TwoArcs_18.dat'
-    # FileName = ProblemPath + '/Leaf_2.dat'
 
     mesh = Mesh()
     mesh.Reader(filename=filename,element_type="tri",reader_type="Read")
@@ -52,7 +37,4 @@ def ProblemData(MainData):
         nodal_spacing='equal',scale=1000.0,condition=3000.0)
     boundary_condition.SetProjectionCriteria(ProjectionCriteria,mesh,takes_self=True)
 
-    solver = LinearSolver(linear_solver="direct", linear_solver_type="umfpack")
-    MainData.solver = solver
-
-    return mesh, material, boundary_condition
+    return mesh, boundary_condition
