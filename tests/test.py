@@ -447,7 +447,7 @@ def TestCaseCylinder():
     MainData.__PARALLEL__ = True
     MainData.numCPU = MP.cpu_count()
 
-    import Tests.Cylinder.ProblemData as Pr
+    import tests.Cylinder.ProblemData as Pr
 
     # GET THE CURRENT DIRECTORY PATH
     pwd = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '../..'))
