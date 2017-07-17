@@ -275,7 +275,7 @@ class FlorenceSetup(object):
         assemble_path = os.path.join(_pwd_,"FiniteElements","Assembly","_Assembly_")
 
         self.extension_paths = [tensor_path,mesh_path,jacobi_path,bp_path,km_path,gm_path,cm_path,mm_path,material_path,assemble_path]
-        # self.extension_paths = [assemble_path]
+        self.extension_paths = [assemble_path]
 
     def SourceClean(self):
 
@@ -315,24 +315,24 @@ class FlorenceSetup(object):
     def Build(self):
 
 
-        low_level_material_list = [ "_NeoHookean_2_", 
-                                    "_MooneyRivlin_0_", 
-                                    "_NearlyIncompressibleMooneyRivlin_",
-                                    "_AnisotropicMooneyRivlin_1_", 
-                                    "_IsotropicElectroMechanics_0_", 
-                                    "_IsotropicElectroMechanics_3_", 
-                                    "_SteinmannModel_",
-                                    "_IsotropicElectroMechanics_101_", 
-                                    "_IsotropicElectroMechanics_105_", 
-                                    "_IsotropicElectroMechanics_106_", 
-                                    "_IsotropicElectroMechanics_107_",
-                                    "_IsotropicElectroMechanics_108_",
-                                    "_IsotropicElectroMechanics_109_",
-                                    "_Piezoelectric_100_"
-                                ]
+        # low_level_material_list = [ "_NeoHookean_2_", 
+        #                             "_MooneyRivlin_0_", 
+        #                             "_NearlyIncompressibleMooneyRivlin_",
+        #                             "_AnisotropicMooneyRivlin_1_", 
+        #                             "_IsotropicElectroMechanics_0_", 
+        #                             "_IsotropicElectroMechanics_3_", 
+        #                             "_SteinmannModel_",
+        #                             "_IsotropicElectroMechanics_101_", 
+        #                             "_IsotropicElectroMechanics_105_", 
+        #                             "_IsotropicElectroMechanics_106_", 
+        #                             "_IsotropicElectroMechanics_107_",
+        #                             "_IsotropicElectroMechanics_108_",
+        #                             "_IsotropicElectroMechanics_109_",
+        #                             "_Piezoelectric_100_"
+        #                         ]
 
         # low_level_material_list = ["_IsotropicElectroMechanics_109_"]
-        # low_level_material_list = ["_NeoHookean_2_"]
+        low_level_material_list = ["_NeoHookean_2_"]
 
         assert self.extension_paths != None
 
@@ -349,9 +349,9 @@ class FlorenceSetup(object):
 
                 ll_material_mech = low_level_material_list[:4]
                 ll_material_electro_mech = low_level_material_list[4:]
-                ll_material_electro_mech.remove("_IsotropicElectroMechanics_109_")
-                # ll_material_mech = []
-                # ll_material_electro_mech = low_level_material_list
+                # ll_material_electro_mech.remove("_IsotropicElectroMechanics_109_")
+                ll_material_mech = low_level_material_list
+                ll_material_electro_mech = []
                 for material in ll_material_mech:
                     execute('cd '+_path+' && make ' + self.compiler_args + " ASSEMBLY_NAME=_LowLevelAssemblyDF_"  + material)
                 for material in ll_material_electro_mech:

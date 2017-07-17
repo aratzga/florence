@@ -46,9 +46,10 @@ void _GlobalAssemblyDF_(const Real *points,
                         const Real *anisotropic_orientations
                         ) {
 
+#pragma omp parallel
+{
     Integer ndof = nvar*nodeperelem;
     Integer local_capacity = ndof*ndof;
-
 
     Real *LagrangeElemCoords        = allocate<Real>(nodeperelem*ndim);
     Real *EulerElemCoords           = allocate<Real>(nodeperelem*ndim);
@@ -66,7 +67,6 @@ void _GlobalAssemblyDF_(const Real *points,
     Real *traction                  = allocate<Real>(ndof);
     Real *stiffness                 = allocate<Real>(local_capacity);
     Real *geometric_stiffness       = allocate<Real>(local_capacity);
-    Real *mass                      = allocate<Real>(local_capacity);
 
     Integer *current_row_column     = allocate<Integer>(ndof);
     Integer *full_current_row       = allocate<Integer>(local_capacity);
@@ -75,6 +75,7 @@ void _GlobalAssemblyDF_(const Real *points,
     auto mat_obj = _MooneyRivlin_0_<Real>(mu1,mu2,lam);
 
 
+#pragma omp parallel for
     // LOOP OVER ELEMETNS
     for (Integer elem=0; elem < nelem; ++elem) {
 
@@ -110,6 +111,8 @@ void _GlobalAssemblyDF_(const Real *points,
         // COMPUTE CONSTITUTIVE STIFFNESS AND TRACTION
         std::fill(stiffness,stiffness+local_capacity,0.);
         std::fill(traction,traction+ndof,0.);
+// #pragma omp critical
+        {
         _ConstitutiveStiffnessIntegrandDF_Filler_(
             stiffness, 
             traction,
@@ -123,6 +126,7 @@ void _GlobalAssemblyDF_(const Real *points,
             nvar,
             H_VoigtSize,
             requires_geometry_update);
+        }
 
         // COMPUTE GEOMETRIC STIFFNESS
         std::fill(geometric_stiffness,geometric_stiffness+local_capacity,0.);
@@ -177,6 +181,7 @@ void _GlobalAssemblyDF_(const Real *points,
         }
 
         // ASSEMBLE TRACTIONS
+#pragma omp critical
         {
             for (Integer i = 0; i<nodeperelem; ++i) {
                 UInteger T_idx = elements[elem*nodeperelem+i]*nvar;
@@ -187,67 +192,6 @@ void _GlobalAssemblyDF_(const Real *points,
         }
 
     }
-
-    // ASSEMBLE MASS
-    if (is_dynamic) {
-        // This is performed only once as mass integrand is Lagrangian
-        // hence not mixing this with stiffness and mass integrand is beneficial
-        for (Integer elem=0 ; elem<nelem; ++elem) {
-
-            // GET THE FIELDS AT THE ELEMENT LEVEL
-            for (Integer i=0; i<nodeperelem; ++i) {
-                const Integer inode = elements[elem*nodeperelem+i];
-                for (Integer j=0; j<ndim; ++j) {
-                    LagrangeElemCoords[i*ndim+j] = points[inode*ndim+j];
-                    EulerElemCoords[i*ndim+j] = Eulerx[inode*ndim+j];
-                }
-            }
-
-            // COMPUTE KINEMATIC MEASURES
-            std::fill(F,F+ngauss*ndim*ndim,0.);
-            std::fill(SpatialGradient,SpatialGradient+ngauss*nodeperelem*ndim,0.);
-            std::fill(detJ,detJ+ngauss,0.);
-            KinematicMeasures(  SpatialGradient, 
-                                F, 
-                                detJ, 
-                                Jm, 
-                                AllGauss,
-                                LagrangeElemCoords, 
-                                EulerElemCoords, 
-                                ngauss, 
-                                ndim, 
-                                nodeperelem, 
-                                1
-                                );
-
-            std::fill(mass,mass+local_capacity,0);
-
-            // Call MassIntegrand
-            _MassIntegrand_Filler_( mass,
-                                    bases, 
-                                    detJ,
-                                    ngauss,
-                                    nodeperelem,
-                                    ndim,
-                                    nvar,
-                                    rho);
-
-            // Fill IJV
-            fill_triplet(   local_rows_mass, 
-                            local_cols_mass, 
-                            mass, 
-                            I_mass, 
-                            J_mass,
-                            V_mass,
-                            elem, 
-                            nvar, 
-                            nodeperelem, 
-                            elements,
-                            local_capacity, 
-                            local_capacity); 
-        }
-    }
-
 
     deallocate(LagrangeElemCoords);
     deallocate(EulerElemCoords);
@@ -262,11 +206,77 @@ void _GlobalAssemblyDF_(const Real *points,
     deallocate(traction);
     deallocate(stiffness);
     deallocate(geometric_stiffness);
-    deallocate(mass);
 
     deallocate(full_current_row);
     deallocate(full_current_column);
     deallocate(current_row_column);
+
+}
+
+    // Real *mass                      = allocate<Real>(local_capacity);
+    // // ASSEMBLE MASS
+    // if (is_dynamic) {
+    //     // This is performed only once as mass integrand is Lagrangian
+    //     // hence not mixing this with stiffness and mass integrand is beneficial
+    //     for (Integer elem=0 ; elem<nelem; ++elem) {
+
+    //         // GET THE FIELDS AT THE ELEMENT LEVEL
+    //         for (Integer i=0; i<nodeperelem; ++i) {
+    //             const Integer inode = elements[elem*nodeperelem+i];
+    //             for (Integer j=0; j<ndim; ++j) {
+    //                 LagrangeElemCoords[i*ndim+j] = points[inode*ndim+j];
+    //                 EulerElemCoords[i*ndim+j] = Eulerx[inode*ndim+j];
+    //             }
+    //         }
+
+    //         // COMPUTE KINEMATIC MEASURES
+    //         std::fill(F,F+ngauss*ndim*ndim,0.);
+    //         std::fill(SpatialGradient,SpatialGradient+ngauss*nodeperelem*ndim,0.);
+    //         std::fill(detJ,detJ+ngauss,0.);
+    //         KinematicMeasures(  SpatialGradient, 
+    //                             F, 
+    //                             detJ, 
+    //                             Jm, 
+    //                             AllGauss,
+    //                             LagrangeElemCoords, 
+    //                             EulerElemCoords, 
+    //                             ngauss, 
+    //                             ndim, 
+    //                             nodeperelem, 
+    //                             1
+    //                             );
+
+    //         std::fill(mass,mass+local_capacity,0);
+
+    //         // Call MassIntegrand
+    //         _MassIntegrand_Filler_( mass,
+    //                                 bases, 
+    //                                 detJ,
+    //                                 ngauss,
+    //                                 nodeperelem,
+    //                                 ndim,
+    //                                 nvar,
+    //                                 rho);
+
+    //         // Fill IJV
+    //         fill_triplet(   local_rows_mass, 
+    //                         local_cols_mass, 
+    //                         mass, 
+    //                         I_mass, 
+    //                         J_mass,
+    //                         V_mass,
+    //                         elem, 
+    //                         nvar, 
+    //                         nodeperelem, 
+    //                         elements,
+    //                         local_capacity, 
+    //                         local_capacity); 
+    //     }
+    // }
+
+
+    // deallocate(mass);
+
 
 }
 

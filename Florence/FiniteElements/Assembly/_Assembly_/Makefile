@@ -63,6 +63,7 @@ CXXFLAGS += -march=native -no-ansi-alias -xHost -fp-model fast=1 -inline-forcein
 endif
 
 CXXFLAGS += $(FASTOR_OPTFLAGS) -I$(FASTOR_INCLUDE_PATH)
+CXXFLAGS += -fopenmp
 
 all: build_module
 

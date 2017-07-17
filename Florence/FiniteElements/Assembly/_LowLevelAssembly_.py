@@ -11,7 +11,7 @@ try:
     from ._LowLevelAssemblyDPF__IsotropicElectroMechanics_101_ import _LowLevelAssemblyDPF__IsotropicElectroMechanics_101_
     from ._LowLevelAssemblyDPF__IsotropicElectroMechanics_105_ import _LowLevelAssemblyDPF__IsotropicElectroMechanics_105_
     from ._LowLevelAssemblyDPF__IsotropicElectroMechanics_106_ import _LowLevelAssemblyDPF__IsotropicElectroMechanics_106_
-    from ._LowLevelAssemblyDPF__IsotropicElectroMechanics_107_ import _LowLevelAssemblyDPF__IsotropicElectroMechanics_107_
+    # from ._LowLevelAssemblyDPF__IsotropicElectroMechanics_107_ import _LowLevelAssemblyDPF__IsotropicElectroMechanics_107_
     from ._LowLevelAssemblyDPF__IsotropicElectroMechanics_108_ import _LowLevelAssemblyDPF__IsotropicElectroMechanics_108_
     from ._LowLevelAssemblyDPF__Piezoelectric_100_ import _LowLevelAssemblyDPF__Piezoelectric_100_
     has_low_level_dispatcher = True

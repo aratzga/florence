@@ -1,5 +1,4 @@
 import numpy as np
-from .LineBP import LagrangeBP_, LagrangeGaussLobattoBP_
 try:
     from functools import lru_cache
 except ImportError:
@@ -222,6 +221,8 @@ def Legendre(C,xi):
 # Bjorck Peryra Bases
 # This technique blows faster than Vandermonde matrices specially
 # beyond C=24
+# Not used
+# from .LineBP import LagrangeBP_, LagrangeGaussLobattoBP_
 
 @lru_cache(maxsize=None)
 def LagrangeBP(C,xi):
