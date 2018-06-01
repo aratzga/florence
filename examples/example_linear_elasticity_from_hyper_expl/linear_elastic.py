@@ -4,7 +4,7 @@ from Florence import *
 from Florence.VariationalPrinciple import *
 
 
-def explicit_dynamics_mechanics():
+def linear_elastic_dynamics():
     """A hyperelastic explicit dynamics example using Mooney Rivlin model
         of a column under compression with cubic (p=3) hexahedral elements
     """
@@ -14,7 +14,11 @@ def explicit_dynamics_mechanics():
     mesh.GetHighOrderMesh(p=3)
     ndim = mesh.InferSpatialDimension()
 
-    material = ExplicitMooneyRivlin(ndim, mu1=1e5, mu2=1e5, lamb=4e5, rho=1100)
+    #material = ExplicitMooneyRivlin(ndim, mu1=1e5, mu2=1e5, lamb=4e5, rho=1100)
+
+    #material = IncrementalLinearElastic(ndim,mu=1e5,lamb=4e5,rho=1100)
+
+    material = LinearElastic(ndim,mu=1e5,lamb=4e5,rho=1100)
 
     def DirichletFuncDyn(mesh, time_step):
 
@@ -41,7 +45,7 @@ def explicit_dynamics_mechanics():
         return boundary_flags, boundary_data
 
 
-    time_step = 1000
+    time_step = 1
     boundary_condition = BoundaryCondition()
     boundary_condition.SetDirichletCriteria(DirichletFuncDyn, mesh, time_step)
     boundary_condition.SetNeumannCriteria(NeumannFuncDyn, mesh, time_step)
@@ -49,13 +53,15 @@ def explicit_dynamics_mechanics():
 
     formulation = DisplacementFormulation(mesh)
     fem_solver = FEMSolver( total_time=1.,
-                            number_of_load_increments=time_step,
-                            analysis_type="dynamic",
-                            analysis_subtype="explicit",
-                            mass_type="lumped",
+                            number_of_load_increments=1,
+                            #analysis_type="dynamic",
+                            analysis_type="static",
+                            #analysis_subtype="explicit",
+                            #mass_type="lumped",
                             optimise=True,
                             print_incremental_log=True,
-                            save_frequency=10)
+                            save_frequency=1,
+                            analysis_nature="linear")
 
     solution = fem_solver.Solve(formulation=formulation, mesh=mesh,
             material=material, boundary_condition=boundary_condition)
@@ -70,4 +76,4 @@ def explicit_dynamics_mechanics():
 
 
 if __name__ == "__main__":
-    explicit_dynamics_mechanics()
+    linear_elastic_dynamics()
