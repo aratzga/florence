@@ -157,12 +157,8 @@ class FlorenceSetup(object):
         if os.path.isdir("/usr/local/include/Fastor"):
             self.fastor_include_path = "/usr/local/include/Fastor"
         else:
-            # Local copies
-            if "darwin" in self._os:
-                self.fastor_include_path = "/Users/romanpoya/Dropbox/Fastor"
-            else:
-                self.fastor_include_path = "/home/roman/Dropbox/Fastor"
-
+            raise RuntimeError("Florence expects Fastor headers to be under '/usr/local/include/Fastor/' directory")
+            return
 
 
     def GetBLAS(self, _blas=None):
@@ -387,6 +383,10 @@ class FlorenceSetup(object):
                 execute('cd '+_path+' && make ' + self.compiler_args +\
                     " ASSEMBLY_NAME=_LowLevelAssemblyExplicit_DF_DPF_ CONDF_INC=../../../VariationalPrinciple/_Traction_/\
                     CONDF_INC=../../../VariationalPrinciple/_Traction_/")
+
+                # Perfect Laplacian assembler
+                execute('cd '+_path+' && make ' + self.compiler_args +\
+                    " ASSEMBLY_NAME=_LowLevelAssemblyPerfectLaplacian_ ")
 
         # Get rid of cython sources
         sys.stdout = open(os.devnull, 'w')

@@ -1,7 +1,5 @@
 from __future__ import print_function
-import importlib
-import sys, os, imp, time, gc
-import os, sys
+import sys, os, imp, time, gc, importlib
 from sys import exit
 from datetime import datetime
 from warnings import warn
@@ -9,7 +7,6 @@ from warnings import warn
 import numpy as np
 import scipy as sp
 # from scipy.io import loadmat, savemat
-import multiprocessing as MP
 
 # AVOID WRITING .pyc OR .pyo FILES
 sys.dont_write_bytecode
@@ -19,21 +16,24 @@ np.set_printoptions(linewidth=300)
 
 # APPEND ALL REQUIRED PATHS
 sys.path.append(os.path.join(os.path.expanduser("~"),"florence"))
+sys.path.append('../examples/simple_laplace/')
 sys.path.append('../examples/car_crash_analysis/')
 sys.path.append('../examples/curved_mesh_generation/')
 sys.path.append('../examples/hyperelastic_explicit_dynamics/')
 sys.path.append('../examples/wrinkling_of_soft_dielectric_film/')
+sys.path.append('../examples/linear_elastic_dynamics/')
+
 
 # IMPORT FLORENCE
 from Florence import *
-from Florence import Base as MainData
-from Florence.PostProcessing import PostProcess
 
 # IMPORT EXAMPLES
+from simple_laplace import simple_laplace
 from crash_analysis_with_explicit_contact import crash_analysis
 from high_order_curved_mesh_generation import high_order_curved_mesh_generation
 from hyperelastic_explicit_dynamics import explicit_dynamics_mechanics
 from wrinkling_of_soft_dielectric_film import dielectric_wrinkling
+from linear_elastic_dynamics import linear_elastic_dynamics
 
 tick  = u'\u2713'.encode('utf8')  + b' : '
 cross = u'\u2717'.encode('utf8')  + b' : '
@@ -163,27 +163,27 @@ def final_solution_checker(material,solver,fem_solver,TotalDisp,Dict):
 
     Dict['ScaledJacobian'] = Dict['ScaledJacobian'].flatten()
     fem_solver.ScaledJacobian = fem_solver.ScaledJacobian.flatten()
-    # if entity_checker(MainData.ScaledJacobian,Dict['ScaledJacobian'],tol):
     if np.abs((fem_solver.ScaledJacobian.min() - Dict['ScaledJacobian'].min())<tol):
         print(tick,"Final mesh quality is correct")
     else:
-        # print(np.linalg.norm(MainData.ScaledJacobian - Dict['ScaledJacobian']))
         print(cross,"Final mesh quality does not match")
         exit()
 
 
 
 
-def run_examples():
+def test_examples():
     # RUN EXAMPLES AT TEST CASES
+    simple_laplace()
     crash_analysis()
     high_order_curved_mesh_generation()
     explicit_dynamics_mechanics()
     dielectric_wrinkling()
+    linear_elastic_dynamics()
 
 
 # RUN EXAPLES AS TEST CASES
 if __name__ == "__main__":
-    run_examples()
+    test_examples()
 
 

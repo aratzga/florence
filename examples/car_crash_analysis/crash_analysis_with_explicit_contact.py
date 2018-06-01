@@ -1,6 +1,6 @@
 import os
+import numpy as np
 from Florence import *
-from Florence.VariationalPrinciple import *
 
 #for testing second commit
 #for testing third commit
