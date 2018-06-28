@@ -164,7 +164,11 @@ def write_vtu(Verts, Cells, pdata=None, pvdata=None, cdata=None, cvdata=None, fn
     # check pvdata
     # must be 3*Ndof x n_pvdata
     n_pvdata = 0
+<<<<<<< HEAD
     if pvdata != None:
+=======
+    if pvdata is not None:
+>>>>>>> upstream/master
         if numpy.ndim(pvdata)>1:
             n_pvdata = pvdata.shape[1]
         else:

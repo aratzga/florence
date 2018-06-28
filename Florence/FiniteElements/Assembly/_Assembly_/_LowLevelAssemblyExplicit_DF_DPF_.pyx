@@ -46,7 +46,11 @@ cdef extern from "_LowLevelAssemblyExplicit_DF_DPF_.h" nogil:
                         ) nogil
 
 
+<<<<<<< HEAD
 def _LowLevelAssemblyExplicit_DF_DPF_(fem_solver, function_space, formulation, mesh, material, Real[:,::1] Eulerx, Real[::1] Eulerp):
+=======
+def _LowLevelAssemblyExplicit_DF_DPF_(function_space, formulation, mesh, material, Real[:,::1] Eulerx, Real[::1] Eulerp):
+>>>>>>> upstream/master
 
     # GET VARIABLES FOR DISPATCHING TO C
     cdef Integer ndim                       = formulation.ndim
@@ -63,8 +67,13 @@ def _LowLevelAssemblyExplicit_DF_DPF_(fem_solver, function_space, formulation, m
     cdef np.ndarray[Real,ndim=3, mode='c'] Jm           = function_space.Jm
     cdef np.ndarray[Real,ndim=1, mode='c'] AllGauss     = function_space.AllGauss.flatten()
 
+<<<<<<< HEAD
     cdef Integer requires_geometry_update               = fem_solver.requires_geometry_update
     cdef Integer is_dynamic                             = fem_solver.analysis_type != "static" and fem_solver.is_mass_computed is False
+=======
+    cdef Integer requires_geometry_update               = True
+    cdef Integer is_dynamic                             = False
+>>>>>>> upstream/master
 
     cdef np.ndarray[Integer,ndim=1,mode='c'] local_rows_mass        = formulation.local_rows_mass
     cdef np.ndarray[Integer,ndim=1,mode='c'] local_cols_mass        = formulation.local_columns_mass
@@ -88,6 +97,7 @@ def _LowLevelAssemblyExplicit_DF_DPF_(fem_solver, function_space, formulation, m
     cdef Real mu=0.,mu1=0.,mu2=0.,mu3=0.,mue=0.,lamb=0.,eps_1=0.,eps_2=0., eps_3=0., eps_e=0.
 
     cdef int material_number
+<<<<<<< HEAD
     if material.mtype == "NeoHookean":
         mu, lamb = material.mu, material.lamb
         material_number = 0
@@ -105,6 +115,45 @@ def _LowLevelAssemblyExplicit_DF_DPF_(fem_solver, function_space, formulation, m
         material_number = 4
     else:
         raise NotImplementedError("Low level assembly for material {} not available".format(material.mtype))
+=======
+    if material.mtype == "ExplicitMooneyRivlin":
+        mu1, mu2, lamb = material.mu1, material.mu2, material.lamb
+        material_number = 0
+    elif material.mtype == "NeoHookean":
+        mu, lamb = material.mu, material.lamb
+        material_number = 1
+    elif material.mtype == "MooneyRivlin":
+        mu1, mu2, lamb = material.mu1, material.mu2, material.lamb
+        material_number = 2
+    elif material.mtype == "NearlyIncompressibleMooneyRivlin":
+        mu1, mu2, mu3 = material.alpha, material.beta, material.kappa
+        material_number = 3
+    elif material.mtype == "IsotropicElectroMechanics_101":
+        mu, lamb, eps_1 = material.mu, material.lamb, material.eps_1
+        material_number = 4
+    elif material.mtype == "IsotropicElectroMechanics_105":
+        mu1, mu2, lamb, eps_1, eps_2 = material.mu1, material.mu2, material.lamb, material.eps_1, material.eps_2
+        material_number = 5
+    elif material.mtype == "IsotropicElectroMechanics_106":
+        mu1, mu2, lamb, eps_1, eps_2 = material.mu1, material.mu2, material.lamb, material.eps_1, material.eps_2
+        material_number = 6
+    elif material.mtype == "IsotropicElectroMechanics_107":
+        mu1, mu2, mue, lamb, eps_1, eps_2, eps_e = material.mu1, material.mu2, material.mue, material.lamb, \
+            material.eps_1, material.eps_2, material.eps_e
+        material_number = 7
+    elif material.mtype == "IsotropicElectroMechanics_108":
+        mu1, mu2, lamb, eps_2 = material.mu1, material.mu2, material.lamb, material.eps_2
+        material_number = 8
+    elif material.mtype == "ExplicitIsotropicElectroMechanics_108":
+        mu1, mu2, lamb, eps_2 = material.mu1, material.mu2, material.lamb, material.eps_2
+        material_number = 9
+    elif material.mtype == "LinearElastic" or material.mtype == "IncrementalLinearElastic":
+        mu, lamb = material.mu, material.lamb
+        material_number = 10
+    else:
+        raise NotImplementedError("Low level assembly for material {} not available for explicit analysis."
+            " Consider 'optimise=False' for now".format(material.mtype))
+>>>>>>> upstream/master
 
     cdef Real rho = material.rho
 

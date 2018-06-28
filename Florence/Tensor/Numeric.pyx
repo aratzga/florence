@@ -2,6 +2,10 @@ from cython import boundscheck, wraparound, cdivision
 import numpy as np
 cimport numpy as np
 
+<<<<<<< HEAD
+=======
+from libc.stdint cimport int64_t
+>>>>>>> upstream/master
 from libc.math cimport fabs
 from libcpp.vector cimport vector
 from cpython cimport bool
@@ -39,7 +43,12 @@ Real = np.float64
 ctypedef np.float64_t Real_t
 
 Integer = np.int64
+<<<<<<< HEAD
 ctypedef np.int64_t Integer_t
+=======
+# ctypedef np.int64_t Integer_t
+ctypedef int64_t Integer_t
+>>>>>>> upstream/master
 
 cdef extern from "<algorithm>" namespace "std":
     void fill(Real_t *first, Real_t *last, Real_t num)
@@ -69,7 +78,11 @@ def trace(np.ndarray[Real_t, ndim=2] A):
         raise AssertionError("Trace of non-Hermitian (non-square) matrix requested")
 
     for i in range(0,n1):
+<<<<<<< HEAD
        trA += A[i,i] 
+=======
+       trA += A[i,i]
+>>>>>>> upstream/master
     return trA
 
 
@@ -78,13 +91,21 @@ def trace(np.ndarray[Real_t, ndim=2] A):
 @wraparound(False)
 def doublecontract(np.ndarray[Real_t, ndim=2] A, np.ndarray[Real_t, ndim=2] B):
     """Double contraction of 2D Arrays"""
+<<<<<<< HEAD
     # THIS FUNCTION IS FASTER THAN np.einsum FOR SMALLER MATRICES AND SLOWER THAN FOR LARGER MATRICES. 
+=======
+    # THIS FUNCTION IS FASTER THAN np.einsum FOR SMALLER MATRICES AND SLOWER THAN FOR LARGER MATRICES.
+>>>>>>> upstream/master
     cdef:
         int a1 = A.shape[0]
         int b1 = B.shape[0]
         int a2 = A.shape[1]
         int b2 = B.shape[1]
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> upstream/master
     if a1!=b1 or a2!=b2:
         raise ValueError('Incompatible dimensions for double contraction')
 
@@ -104,8 +125,13 @@ cdef inline Real_t _doublecontract(Real_t *A, Real_t *B, int size):
 @wraparound(False)
 cpdef void makezero(np.ndarray[Real_t, ndim=2] A, Real_t tol=1.0e-14):
     """Substitute the elements of an array which are close to zero with zero.
+<<<<<<< HEAD
         This is an in-place operation and does not return anything""" 
     
+=======
+        This is an in-place operation and does not return anything"""
+
+>>>>>>> upstream/master
     cdef:
         int i,j
         int a1 = A.shape[0]
@@ -120,8 +146,13 @@ cpdef void makezero(np.ndarray[Real_t, ndim=2] A, Real_t tol=1.0e-14):
 @wraparound(False)
 cpdef void makezero3d(np.ndarray[Real_t, ndim=3] A, Real_t tol=1.0e-14):
     """Substitute the elements of an array which are close to zero with zero.
+<<<<<<< HEAD
         This is an in-place operation and does not return anything""" 
     
+=======
+        This is an in-place operation and does not return anything"""
+
+>>>>>>> upstream/master
     cdef:
         int i,j,k
         int a1 = A.shape[0]
@@ -138,7 +169,11 @@ cpdef void makezero3d(np.ndarray[Real_t, ndim=3] A, Real_t tol=1.0e-14):
 @boundscheck(False)
 @wraparound(False)
 cpdef bool issymetric(np.ndarray[Real_t, ndim=2] A, Real_t tol=1.0e-12):
+<<<<<<< HEAD
     """Checks if a Hermitian floating point matrix is symmetric within a tolerance""" 
+=======
+    """Checks if a Hermitian floating point matrix is symmetric within a tolerance"""
+>>>>>>> upstream/master
     cdef:
         int i,j
         int a1 = A.shape[0]
@@ -163,7 +198,11 @@ cpdef bool issymetric(np.ndarray[Real_t, ndim=2] A, Real_t tol=1.0e-12):
 @wraparound(False)
 def tovoigt(np.ndarray[Real_t, ndim=4, mode='c'] C):
     """Convert a 4D array to its Voigt represenation"""
+<<<<<<< HEAD
     cdef np.ndarray[Real_t, ndim=2,mode='c'] VoigtA 
+=======
+    cdef np.ndarray[Real_t, ndim=2,mode='c'] VoigtA
+>>>>>>> upstream/master
     cdef int n1dim = C.shape[0]
     # DISPATCH CALL TO APPROPRIATE FUNCTION
     if n1dim == 3:
@@ -213,8 +252,13 @@ cdef _Voigt3(const Real_t *C, Real_t *VoigtA):
     VoigtA[33] = VoigtA[23]
     VoigtA[34] = VoigtA[29]
     VoigtA[35] = 0.5*(C[50]+C[52])
+<<<<<<< HEAD
     
     
+=======
+
+
+>>>>>>> upstream/master
 cdef _Voigt2(const Real_t *C, Real_t *VoigtA):
     VoigtA[0] = C[0]
     VoigtA[1] = C[3]
@@ -233,7 +277,11 @@ cdef _Voigt2(const Real_t *C, Real_t *VoigtA):
 @wraparound(False)
 def tovoigt3(np.ndarray[Real_t, ndim=3, mode='c'] e):
     """Convert a 3D array to its Voigt represenation"""
+<<<<<<< HEAD
     cdef np.ndarray[Real_t, ndim=2,mode='c'] VoigtA 
+=======
+    cdef np.ndarray[Real_t, ndim=2,mode='c'] VoigtA
+>>>>>>> upstream/master
     cdef int n1dim = e.shape[0]
     # DISPATCH CALL TO APPROPRIATE FUNCTION
     if n1dim == 3:
@@ -265,8 +313,13 @@ cdef _Voigt33(const Real_t *e, Real_t *VoigtA):
     VoigtA[15] = 0.5*(e[15]+e[21])
     VoigtA[16] = 0.5*(e[16]+e[22])
     VoigtA[17] = 0.5*(e[17]+e[23])
+<<<<<<< HEAD
     
     
+=======
+
+
+>>>>>>> upstream/master
 cdef _Voigt23(const Real_t *e, Real_t *VoigtA):
     VoigtA[0] = e[0]
     VoigtA[1] = e[1]
@@ -279,6 +332,7 @@ cdef _Voigt23(const Real_t *e, Real_t *VoigtA):
 @boundscheck(False)
 def cross2d(np.ndarray[double, ndim=2] A, np.ndarray[double, ndim=2] B, str dim="3d", toarray=False):
     """Cross product of second order tensors A_ij x B_ij defined in the sense of R. de Boer
+<<<<<<< HEAD
         [Vektor- und Tensorrechnung fur Ingenieure] and J. Bonet [A computational framework 
         for polyconvex large strain elasticity]. 
         
@@ -286,6 +340,15 @@ def cross2d(np.ndarray[double, ndim=2] A, np.ndarray[double, ndim=2] B, str dim=
             A:                      [ndarray] ndarry of 3x3
             B:                      [ndarray] ndarry of 3x3
             dim:                    [str] either "2d" or "3d". To get a cross product in a 2D 
+=======
+        [Vektor- und Tensorrechnung fur Ingenieure] and J. Bonet [A computational framework
+        for polyconvex large strain elasticity].
+
+        input:
+            A:                      [ndarray] ndarry of 3x3
+            B:                      [ndarray] ndarry of 3x3
+            dim:                    [str] either "2d" or "3d". To get a cross product in a 2D
+>>>>>>> upstream/master
                                     space you still need to supply the matrices in 3D space
                                     and specify the dim argument as 2d. The dim="2d" essentially
                                     assumes that A and B have their zeros in the third direction
@@ -294,6 +357,7 @@ def cross2d(np.ndarray[double, ndim=2] A, np.ndarray[double, ndim=2] B, str dim=
                                                             [A00, A01, 0],
                                                             [A10, A11, 0],
                                                             [  0,   0, 0],
+<<<<<<< HEAD
                                                             ]) 
 
             toarray:                [bool] The default outupt of this unction is a python list 
@@ -301,12 +365,25 @@ def cross2d(np.ndarray[double, ndim=2] A, np.ndarray[double, ndim=2] B, str dim=
                                     performance reason, as numpy for 3x3 array would introduce 
                                     quite a bit of overhead. Specify toarray to true if a numpy
                                     array is desired as an output 
+=======
+                                                            ])
+
+            toarray:                [bool] The default outupt of this unction is a python list
+                                    and not a numpy array as one would expect. This is for
+                                    performance reason, as numpy for 3x3 array would introduce
+                                    quite a bit of overhead. Specify toarray to true if a numpy
+                                    array is desired as an output
+>>>>>>> upstream/master
     """
 
 
     if A.shape[0] != 3 or A.shape[1] != 3:
         raise ValueError("Dimension of matrix should be 3x3")
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> upstream/master
     cdef:
         Real_t A00=A[0,0]
         Real_t A11=A[1,1]
@@ -317,7 +394,11 @@ def cross2d(np.ndarray[double, ndim=2] A, np.ndarray[double, ndim=2] B, str dim=
         Real_t A10=A[1,0]
         Real_t A20=A[2,0]
         Real_t A21=A[2,1]
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> upstream/master
         Real_t B00=B[0,0]
         Real_t B11=B[1,1]
         Real_t B22=B[2,2]
@@ -361,10 +442,17 @@ def findfirst(np.ndarray A, Integer_t num):
 
     cdef:
         Integer_t size = A.size
+<<<<<<< HEAD
         Integer_t ndim = A.ndim 
         Integer_t[::1] arr = A.ravel()
         Integer_t col = A.shape[1]
         
+=======
+        Integer_t ndim = A.ndim
+        Integer_t[::1] arr = A.ravel()
+        Integer_t col = A.shape[1]
+
+>>>>>>> upstream/master
     cdef Integer_t *idx = find(&arr[0],<Integer_t*>(&arr[-1]+1),num)
     cdef Integer_t ret = idx - &arr[0]
 

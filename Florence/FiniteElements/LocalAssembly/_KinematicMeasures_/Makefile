@@ -5,8 +5,20 @@ EXT_POSTFIX = so
 CYTHONFLAGS = -DNPY_NO_DEPRECATED_API
 
 CYTHON = cython --cplus
+<<<<<<< HEAD
 REMOVE = rm -rf
 MOVE = mv
+=======
+
+ifeq ($(OS),Windows_NT)
+REMOVE = del
+MOVE = move
+else
+REMOVE = rm -rf
+MOVE = mv
+endif
+ENTER = cd
+>>>>>>> upstream/master
 
 FASTOR_OPTFLAGS = -DFASTOR_NO_ALIAS -DFASTOR_USE_VECTORISED_EXPR_ASSIGN -DCONTRACT_OPT=2 -DFASTOR_NO_STATIC_WARNING
 KINEMATICS =
@@ -16,7 +28,10 @@ CXXSTD=-std=c++14
 OPTFLAGS= -O3 -fno-strict-aliasing -DNDEBUG
 CXXFLAGS= -fPIC -shared -pthread -Wall $(CYTHONFLAGS) $(OPTFLAGS)
 
+<<<<<<< HEAD
 # NUMPY_INCLUDE_PATH=python -c "import numpy; print numpy.get_include()"
+=======
+>>>>>>> upstream/master
 NUMPY_INCLUDE_PATH = /usr/local/lib/python2.7/dist-packages/numpy/core/include
 
 ifeq ($(findstring g++,$(CXX)),g++)
@@ -46,6 +61,13 @@ endif
 CXXFLAGS += $(FASTOR_OPTFLAGS) -I$(FASTOR_INCLUDE_PATH)
 CXXFLAGS += $(KINEMATICS)
 
+<<<<<<< HEAD
+=======
+ifeq ($(OS),Windows_NT)
+CXXFLAGS += -D_hypot=hypot -m64 -Wno-format-extra-args -Wno-format
+endif
+
+>>>>>>> upstream/master
 all: build_module
 
 build_module:

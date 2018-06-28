@@ -1,6 +1,7 @@
 PYTHON_VERSION = python2.7
 PYTHON_INCLUDE_PATH = /usr/include/python2.7/
 PYTHON_LD_PATH = /usr/lib/
+<<<<<<< HEAD
 EXT_POSTFIX= so
 CYTHONFLAGS = -DNPY_NO_DEPRECATED_API
 
@@ -17,6 +18,22 @@ ENTER = cd
 # ifeq ($(UNAME_S),Darwin)
 #     FASTOR_INCLUDE_PATH +=/Users/romanpoya/Dropbox/Fastor
 # endif
+=======
+EXT_POSTFIX = so
+CYTHONFLAGS = -DNPY_NO_DEPRECATED_API
+
+CYTHON = cython --cplus
+
+ifeq ($(OS),Windows_NT)
+REMOVE = del
+MOVE = move
+else
+REMOVE = rm -rf
+MOVE = mv
+endif
+ENTER = cd
+
+>>>>>>> upstream/master
 
 # ***NOTE***: For python compatibility do NOT supply FASTOR_USE_BREAKING_PERMUTATION
 FASTOR_OPTFLAGS = -DFASTOR_NO_ALIAS -DFASTOR_USE_VECTORISED_EXPR_ASSIGN -DCONTRACT_OPT=2 -DFASTOR_NO_STATIC_WARNING
@@ -27,9 +44,13 @@ CXXSTD=-std=c++14
 OPTFLAGS= -O3 -fno-strict-aliasing -DNDEBUG
 CXXFLAGS= -fPIC -shared -pthread -Wall $(CYTHONFLAGS) $(OPTFLAGS)
 
+<<<<<<< HEAD
 # NUMPY_INCLUDE_PATH=python -c "import numpy; print numpy.get_include()"
 # NUMPY_INCLUDE_PATH = /usr/local/lib/python2.7/dist-packages/numpy/core/include
 NUMPY_INCLUDE_PATH =  /Users/romanpoya/VE/env1/lib/python2.7/site-packages/numpy/core/include/
+=======
+NUMPY_INCLUDE_PATH = /usr/local/lib/python2.7/dist-packages/numpy/core/include
+>>>>>>> upstream/master
 
 BLAS_VERSION = openblas
 BLAS_INCLUDE_PATH = /opt/OpenBLAS/include/
@@ -74,6 +95,13 @@ endif
 CXXFLAGS += $(FASTOR_OPTFLAGS) -I$(FASTOR_INCLUDE_PATH)
 CXXFLAGS += $(KINEMATICS)
 
+<<<<<<< HEAD
+=======
+ifeq ($(OS),Windows_NT)
+CXXFLAGS += -D_hypot=hypot -m64 -Wno-format-extra-args -Wno-format
+endif
+
+>>>>>>> upstream/master
 all: build_module
 
 build_module:
@@ -85,7 +113,37 @@ build_module:
 	$(MOVE) $(ASSEMBLY_NAME).$(EXT_POSTFIX) ../
 
 clean:
+<<<<<<< HEAD
 	$(REMOVE) $(ASSEMBLY_NAME).cpp $(ASSEMBLY_NAME).$(EXT_POSTFIX)
 
 source_clean:
 	$(REMOVE) $(ASSEMBLY_NAME).cpp
+=======
+	$(REMOVE) $(ASSEMBLY_NAME).cpp $(ASSEMBLY_NAME).$(EXT_POSTFIX) ../$(ASSEMBLY_NAME).$(EXT_POSTFIX)
+
+source_clean:
+	$(REMOVE) $(ASSEMBLY_NAME).cpp
+
+
+
+cython_assembler_build:
+	@echo "Building florence FEM sparse assembler module"
+	$(CYTHON) SparseAssemblyNative.pyx
+	$(CXX) $(CXXSTD) $(CXXFLAGS) SparseAssemblyNative.cpp -o SparseAssemblyNative.$(EXT_POSTFIX) -I. \
+	-I$(PYTHON_INCLUDE_PATH) -I$(NUMPY_INCLUDE_PATH) -L$(PYTHON_LD_PATH) -l$(PYTHON_VERSION)
+	$(MOVE) SparseAssemblyNative.$(EXT_POSTFIX) ../
+
+	@echo "Building florence FEM RHS assembler module"
+	$(CYTHON) RHSAssemblyNative.pyx
+	$(CXX) $(CXXSTD) $(CXXFLAGS) RHSAssemblyNative.cpp -o RHSAssemblyNative.$(EXT_POSTFIX) -I. \
+	-I$(PYTHON_INCLUDE_PATH) -I$(NUMPY_INCLUDE_PATH) -L$(PYTHON_LD_PATH) -l$(PYTHON_VERSION)
+	$(MOVE) RHSAssemblyNative.$(EXT_POSTFIX) ../
+
+cython_assembler_clean:
+	$(REMOVE) SparseAssemblyNative.cpp SparseAssemblyNative.$(EXT_POSTFIX) ../SparseAssemblyNative.$(EXT_POSTFIX)
+	$(REMOVE) RHSAssemblyNative.cpp RHSAssemblyNative.$(EXT_POSTFIX) ../RHSAssemblyNative.$(EXT_POSTFIX)
+
+cython_assembler_source_clean:
+	$(REMOVE) SparseAssemblyNative.cpp
+	$(REMOVE) RHSAssemblyNative.cpp
+>>>>>>> upstream/master

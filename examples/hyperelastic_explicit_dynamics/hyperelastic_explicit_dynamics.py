@@ -12,7 +12,11 @@ def explicit_dynamics_mechanics():
     mesh.GetHighOrderMesh(p=3)
     ndim = mesh.InferSpatialDimension()
 
+<<<<<<< HEAD
     material = ExplicitMooneyRivlin(ndim, mu1=1e5, mu2=1e5, lamb=4e5, rho=1100)
+=======
+    material = NearlyIncompressibleMooneyRivlin(ndim, mu=4e5, lamb=2e6, rho=1100)
+>>>>>>> upstream/master
 
     def DirichletFuncDyn(mesh, time_step):
 
@@ -59,7 +63,11 @@ def explicit_dynamics_mechanics():
             material=material, boundary_condition=boundary_condition)
 
     # Write to paraview
+<<<<<<< HEAD
     solution.WriteVTK("explicit_dynamics_mechanics",quantity=2)
+=======
+    # solution.WriteVTK("explicit_dynamics_mechanics",quantity=2)
+>>>>>>> upstream/master
     # Write to HDF5/MATLAB(.mat)
     # solution.WriteHDF5("explicit_dynamics_mechanics",compute_recovered_fields=False)
     # In-built plotter - requires mayavi

@@ -10,8 +10,11 @@ from Florence.LegendreTransform import LegendreTransform
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from .VariationalPrinciple import *
 
+<<<<<<< HEAD
 import pyximport
 pyximport.install(setup_args={'include_dirs': np.get_include()})
+=======
+>>>>>>> upstream/master
 from Florence.FiniteElements.Assembly.SparseAssemblyNative import SparseAssemblyNative
 from Florence.FiniteElements.Assembly.RHSAssemblyNative import RHSAssemblyNative
 
@@ -1013,8 +1016,11 @@ class CoupleStressFormulation(VariationalPrinciple):
             del ParallelTuple
             gc.collect()
 
+<<<<<<< HEAD
         # REALLY DANGEROUS FOR MULTIPHYSICS PROBLEMS - NOTE THAT SCIPY RUNS A PRUNE ANYWAY
         # V_stiffness[np.isclose(V_stiffness,0.)] = 0.
+=======
+>>>>>>> upstream/master
 
         stiffness = coo_matrix((V_stiffness,(I_stiffness,J_stiffness)),
             shape=((nvar*mesh.points.shape[0],nvar*mesh.points.shape[0])),dtype=np.float64).tocsr()
@@ -1101,6 +1107,7 @@ class CoupleStressFormulation(VariationalPrinciple):
         Eulerw[:,:] += NodalEulerW
         Eulers[:,:] += NodalEulerS
 
+<<<<<<< HEAD
         # if self.fields != 'electro_mechanics':
         #     TotalDisp[:,ndim:,Increment] = NodalEulerW
         #     TotalDisp[:,2*ndim:,Increment] = NodalEulerS
@@ -1108,6 +1115,8 @@ class CoupleStressFormulation(VariationalPrinciple):
         #     TotalDisp[:,ndim+1:,Increment] = NodalEulerW
         #     TotalDisp[:,2*ndim+1:,Increment] = NodalEulerS
 
+=======
+>>>>>>> upstream/master
 
         return NodalEulerW, NodalEulerS
 

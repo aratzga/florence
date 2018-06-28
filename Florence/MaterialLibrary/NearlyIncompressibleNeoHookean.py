@@ -20,6 +20,7 @@ class NearlyIncompressibleNeoHookean(Material):
         mtype = type(self).__name__
         super(NearlyIncompressibleNeoHookean, self).__init__(mtype, ndim, **kwargs)
 
+<<<<<<< HEAD
         self.kappa = 0
         self.pressure = [0]
 
@@ -28,6 +29,8 @@ class NearlyIncompressibleNeoHookean(Material):
         StrainTensors = KinematicMeasures(asarray([eye(self.ndim,self.ndim)]*2),"Nonlinear")
         self.Hessian(StrainTensors)
 
+=======
+>>>>>>> upstream/master
         self.is_nearly_incompressible = True
         self.is_compressible = False
 

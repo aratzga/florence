@@ -21,6 +21,24 @@ def linear_elastic_dynamics():
     #material = IncrementalLinearElastic(ndim, mu=mu, lamb=2.*mu*v/(1-2.*v), density=1100)
 
 
+    aaaaa = np.arange(5)
+
+    file = open("testfile.txt","w") 
+ 
+    file.write("Hello World") 
+    file.write("This is our new text file") 
+    file.write("and this is another line.") 
+    file.write("Why? Because we can.") 
+
+    for i in range(0,5):
+        file.write('{0:2d} {1:2d}\n'.format(i,aaaaa[i]))
+
+# ...     file.write('{0:2d} {1:2d}'.format(i,aaaaa[i]))
+     
+    
+    file.close() 
+
+
     def DirichletFuncDynamic(mesh, time_step):
         boundary_data = np.zeros((mesh.points.shape[0],ndim, time_step))+np.NAN
         # FIX BASE OF COLUMN

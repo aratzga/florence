@@ -9,4 +9,8 @@ from .Solver import *
 from .Utils import PWD, RSWD
 from .PostProcessing import *
 
+<<<<<<< HEAD
 __version__ = 0.1
+=======
+__version__ = "0.1.4.dev"
+>>>>>>> upstream/master

@@ -3,10 +3,13 @@ from numpy import einsum
 from .MaterialBase import Material
 from Florence.Tensor import trace, Voigt, UnVoigt
 
+<<<<<<< HEAD
 #####################################################################################################
                                 # Anisotropic MooneyRivlin Model
 #####################################################################################################
 
+=======
+>>>>>>> upstream/master
 
 class BonetTranservselyIsotropicHyperElastic(Material):
     """A compressible transervely isotropic model based on Bonet 1998.
@@ -19,12 +22,15 @@ class BonetTranservselyIsotropicHyperElastic(Material):
         self.is_transversely_isotropic = True
         self.is_nonisotropic = True
 
+<<<<<<< HEAD
         from Florence.FiniteElements.ElementalMatrices.KinematicMeasures import KinematicMeasures
         self.anisotropic_orientations = np.zeros((1,self.ndim))
         StrainTensors = KinematicMeasures(np.asarray([np.eye(self.ndim,self.ndim)]*2),"Nonlinear")
         self.Hessian(StrainTensors)
         self.anisotropic_orientations = None
 
+=======
+>>>>>>> upstream/master
         self.energy_type = "internal_energy"
         self.nature = "nonlinear"
         self.fields = "mechanics"
@@ -71,12 +77,20 @@ class BonetTranservselyIsotropicHyperElastic(Material):
                 (ut/J - lamb*(J-1.) ) * ( einsum('ik,jl',I,I) + einsum('il,jk',I,I) ) + \
                 4.*eta_2/J*( einsum('ij,k,l',b,FN,FN) + einsum('i,j,kl',FN,FN,b)  ) + \
                 8.*gamma/J*( einsum('i,j,k,l',FN,FN,FN,FN) ) - \
+<<<<<<< HEAD
                 eta_1/J*( einsum('jk,i,l',b,FN,FN) + einsum('ik,j,l',b,FN,FN)  + 
+=======
+                eta_1/J*( einsum('jk,i,l',b,FN,FN) + einsum('ik,j,l',b,FN,FN)  +
+>>>>>>> upstream/master
                         einsum('jl,i,k',b,FN,FN) + einsum('il,j,k',b,FN,FN) )
 
 
         H_Voigt = Voigt(H_Voigt ,1)
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> upstream/master
         self.H_VoigtSize = H_Voigt.shape[0]
 
         return H_Voigt

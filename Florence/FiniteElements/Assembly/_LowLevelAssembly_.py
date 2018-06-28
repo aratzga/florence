@@ -19,7 +19,11 @@ try:
     from ._LowLevelAssemblyDPF__IsotropicElectroMechanics_108_ import _LowLevelAssemblyDPF__IsotropicElectroMechanics_108_
     from ._LowLevelAssemblyDPF__Piezoelectric_100_ import _LowLevelAssemblyDPF__Piezoelectric_100_
     has_low_level_dispatcher = True
+<<<<<<< HEAD
 except IOError:
+=======
+except ImportError:
+>>>>>>> upstream/master
     has_low_level_dispatcher = False
     warn("Cannot use low level dispatchers for Assembly")
 
@@ -27,14 +31,22 @@ except IOError:
 try:
     from ._LowLevelAssemblyExplicit_DF_DPF_ import _LowLevelAssemblyExplicit_DF_DPF_
     has_low_level_dispatcher = True
+<<<<<<< HEAD
 except IOError:
+=======
+except ImportError:
+>>>>>>> upstream/master
     has_low_level_dispatcher = False
     warn("Cannot use low level dispatchers for Assembly")
 
 try:
     from ._LowLevelAssemblyPerfectLaplacian_ import _LowLevelAssemblyPerfectLaplacian_
     has_low_level_dispatcher = True
+<<<<<<< HEAD
 except IOError:
+=======
+except ImportError:
+>>>>>>> upstream/master
     has_low_level_dispatcher = False
     warn("Cannot use low level dispatchers for Assembly")
 
@@ -79,6 +91,31 @@ def _LowLevelAssembly_(fem_solver, function_space, formulation, mesh, material, 
     return stiffness, T, F, mass
 
 
+<<<<<<< HEAD
+=======
+
+def _LowLevelAssembly_Par_(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp):
+
+    prefix = "_LowLevelAssemblyDF__"
+    if formulation.fields == "electro_mechanics":
+        prefix = "_LowLevelAssemblyDPF__"
+        
+    assembly_func = prefix + type(material).__name__ + "_"
+    # CHECK IF LOW LEVEL ASSEMBLY EXISTS FOR MATERIAL
+    ll_exists = False
+    for key in globals().keys():
+        if assembly_func == key:
+            ll_exists = True
+            break
+    if ll_exists is False:
+        raise NotImplementedError("Turning optimise option on for {} material is not supported yet. Consider 'optimise=False' for now".format(type(material).__name__))
+
+    # CALL LOW LEVEL ASSEMBLER
+    return eval(assembly_func)(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp)
+
+
+
+>>>>>>> upstream/master
 def _LowLevelAssemblyExplicit_(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp):
 
     # MAKE MESH DATA CONTIGUOUS
@@ -86,7 +123,11 @@ def _LowLevelAssemblyExplicit_(fem_solver, function_space, formulation, mesh, ma
 
     # CALL LOW LEVEL ASSEMBLER
     I_mass, J_mass, V_mass, \
+<<<<<<< HEAD
         T = _LowLevelAssemblyExplicit_DF_DPF_(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp)
+=======
+        T = _LowLevelAssemblyExplicit_DF_DPF_(function_space, formulation, mesh, material, Eulerx, Eulerp)
+>>>>>>> upstream/master
 
     F, mass = [], []
 
@@ -98,6 +139,14 @@ def _LowLevelAssemblyExplicit_(fem_solver, function_space, formulation, mesh, ma
     return T, F, mass
 
 
+<<<<<<< HEAD
+=======
+def _LowLevelAssemblyExplicit_Par_(function_space, formulation, mesh, material, Eulerx, Eulerp):
+    # CALL LOW LEVEL ASSEMBLER
+    return _LowLevelAssemblyExplicit_DF_DPF_(function_space, formulation, mesh, material, Eulerx, Eulerp)[-1]
+
+
+>>>>>>> upstream/master
 
 def _LowLevelAssemblyLaplacian_(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp):
 

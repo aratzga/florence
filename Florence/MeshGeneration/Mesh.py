@@ -939,6 +939,15 @@ class Mesh(object):
         """Given a linear tri, tet, quad or hex mesh compute high order mesh based on it.
         This is a static method linked to the HigherOrderMeshing module"""
 
+<<<<<<< HEAD
+=======
+        if not isinstance(p,int):
+            raise ValueError("p must be an integer")
+        else:
+            if p < 1:
+                raise ValueError("Value of p={} is not acceptable. Provide p>=1.".format(p))
+
+>>>>>>> upstream/master
         if self.degree is None:
             self.InferPolynomialDegree()
 
@@ -1029,6 +1038,27 @@ class Mesh(object):
         return lengths
 
 
+<<<<<<< HEAD
+=======
+    def Lengths(self,):
+        """Computes length of all types of elements
+        """
+
+        self.__do_essential_memebers_exist__()
+
+        if self.element_type == "line":
+            coords = self.points[self.elements[:,:2],:]
+            lengths = np.linalg.norm(coords[:,1,:] - coords[:,0,:],axis=1)
+        else:
+            self.GetEdges()
+            coord = self.all_edges
+            coords = self.points[self.elements[:,:2],:]
+            lengths = np.linalg.norm(coords[:,1,:] - coords[:,0,:],axis=1)
+
+        return lengths
+
+
+>>>>>>> upstream/master
     def Areas(self, with_sign=False, gpoints=None):
         """Find areas of all 2D elements [tris, quads].
             For 3D elements returns surface areas of faces
@@ -1063,7 +1093,11 @@ class Mesh(object):
             # FIND AREAS ABC
             area0 = np.linalg.det(points[self.elements[:,:3],:])
             # FIND AREAS ACD
+<<<<<<< HEAD
             area1 = np.linalg.det(points[self.elements[:,[1,2,3]],:])
+=======
+            area1 = np.linalg.det(points[self.elements[:,[0,2,3]],:])
+>>>>>>> upstream/master
             # FIND AREAS OF ALL THE ELEMENTS
             area = 0.5*(area0+area1)
 
@@ -1176,6 +1210,37 @@ class Mesh(object):
         return volume
 
 
+<<<<<<< HEAD
+=======
+    def Sizes(self):
+        """Computes the size of elements for all element types.
+            This is a generic method that for 1D=lengths, for 2D=areas and for 3D=volumes.
+            It works for planar and curved elements
+        """
+
+        self.__do_essential_memebers_exist__()
+
+        try:
+            from Florence import DisplacementFormulation
+        except ImportError:
+            raise ValueError("This functionality requires Florence's support")
+
+        if self.element_type != "line":
+            # FOR LINE ELEMENTS THIS APPROACH DOES NOT WORK AS JACOBIAN IS NOT WELL DEFINED
+            formulation = DisplacementFormulation(self)
+            sizes = np.zeros(self.nelem)
+            for elem in range(self.nelem):
+                LagrangeElemCoords = self.points[self.elements[elem,:],:]
+                sizes[elem] = formulation.GetVolume(formulation.function_spaces[0],
+                    LagrangeElemCoords, LagrangeElemCoords, False, elem=elem)
+            return sizes
+
+        else:
+            warn("Sizes of line elements could be incorrect if the mesh is curvilinear")
+            return self.Lengths()
+
+
+>>>>>>> upstream/master
     def AspectRatios(self,algorithm='edge_based'):
         """Compute aspect ratio of the mesh element-by-element.
             For 2D meshes aspect ratio is aspect ratio is defined as
@@ -1261,6 +1326,12 @@ class Mesh(object):
 
                 aspect_ratio = 1.0*maximum/minimum
 
+<<<<<<< HEAD
+=======
+            elif self.element_type == "line":
+                raise ValueError("Line elments do no have aspect ratio")
+
+>>>>>>> upstream/master
         elif algorithm == 'face_based':
             raise NotImplementedError("Face/area based aspect ratio is not implemented yet")
 
@@ -1270,9 +1341,17 @@ class Mesh(object):
     def FaceNormals(self):
         """Computes outward unit normals on faces.
             This is a generic method for all element types apart from lines. If the mesh is in 2D plane
+<<<<<<< HEAD
             then the unit outward normals will point in Z direction.
             This is different from the method self.Normals() as the latter computes normals for 2D elements
             in-plane
+=======
+            then the unit outward normals will point in Z direction. If the mesh is quad or tri type but
+            in 3D plane, this will still compute the correct unit outward normals. outwardness can only
+            be guaranteed for volume meshes.
+            This method is different from the method self.Normals() as the latter can compute normals
+            for 1D/2D elements in-plane
+>>>>>>> upstream/master
         """
 
         self.__do_memebers_exist__()
@@ -1302,26 +1381,126 @@ class Mesh(object):
         normals[:,1] /= norm_normals
         normals[:,2] /= norm_normals
 
+<<<<<<< HEAD
+=======
+        # CHECK IF THE NORMAL IS OUTWARD - FOR LINES DIRECTIONALITY DOES NOT MATTER
+        if self.element_type == "tet" or self.element_type == "hex":
+            self.GetElementsWithBoundaryFaces()
+            meds = self.Medians()
+            face_element_meds = meds[self.boundary_face_to_element[:,0],:]
+            p1pm = face_coords[:,1,:] - face_element_meds
+            # IF THE DOT PROUCT OF NORMALS AND EDGE-MED NODE VECTOR IS NEGATIVE THEN FLIP
+            _check = np.einsum("ij,ij->i",normals,p1pm)
+            normals[np.less(_check,0.)] = -normals[np.less(_check,0.)]
+
+>>>>>>> upstream/master
         return normals
 
 
 
+<<<<<<< HEAD
     def Normals(self):
         """Computes unit outward normals of the boundary
         """
         pass
+=======
+    def Normals(self, show_plot=False):
+        """Computes unit outward normals to the boundary for all element types.
+            Unity and outwardness are guaranteed
+        """
+
+        self.__do_memebers_exist__()
+        ndim = self.InferSpatialDimension()
+
+        if self.element_type == "tet" or self.element_type == "hex":
+            normals = self.FaceNormals()
+        elif self.element_type == "tri" or self.element_type == "quad" or self.element_type == "line":
+            if self.points.shape[1] == 3:
+                normals = self.FaceNormals()
+            else:
+                if self.element_type == "tri" or self.element_type == "quad":
+                    edges = self.edges
+                elif self.element_type == "line":
+                    edges = self.elements
+
+                edge_coords = self.points[edges[:,:2],:]
+                p1p0 = edge_coords[:,1,:] - edge_coords[:,0,:]
+
+                normals = np.zeros_like(p1p0)
+                normals[:,0] = -p1p0[:,1]
+                normals[:,1] =  p1p0[:,0]
+                norm_normals = np.linalg.norm(normals,axis=1)
+                normals[:,0] /= norm_normals
+                normals[:,1] /= norm_normals
+
+                # CHECK IF THE NORMAL IS OUTWARD - FOR LINES DIRECTIONALITY DOES NOT MATTER
+                if self.element_type == "tri" or self.element_type == "quad":
+                    self.GetElementsWithBoundaryEdges()
+                    meds = self.Medians()
+                    edge_element_meds = meds[self.boundary_edge_to_element[:,0],:]
+                    p1pm = edge_coords[:,1,:] - edge_element_meds
+                    # IF THE DOT PROUCT OF NORMALS AND EDGE-MED NODE VECTOR IS NEGATIVE THEN FLIP
+                    _check = np.einsum("ij,ij->i",normals,p1pm)
+                    normals[np.less(_check,0.)] = -normals[np.less(_check,0.)]
+
+
+        if show_plot:
+
+            if ndim == 2:
+                mid_edge_coords = 0.5*(edge_coords[:,1,:] + edge_coords[:,0,:])
+
+                import matplotlib.pyplot as plt
+                figure = plt.figure()
+
+                self.SimplePlot(figure=figure, show_plot=False)
+
+                q = plt.quiver(mid_edge_coords[:,0], mid_edge_coords[:,1],
+                    normals[:,0], normals[:,1],
+                    color='Teal', headlength=5, width=0.004)
+
+                plt.axis('equal')
+                plt.axis('off')
+                plt.tight_layout()
+                plt.show()
+
+
+            elif ndim == 3:
+                mid_face_coords = np.sum(self.points[self.faces,:3],axis=1)/self.faces.shape[1]
+
+                import os
+                os.environ['ETS_TOOLKIT'] = 'qt4'
+                from mayavi import mlab
+
+                figure = mlab.figure(bgcolor=(1,1,1),fgcolor=(1,1,1),size=(1000,800))
+
+                self.SimplePlot(figure=figure, show_plot=False)
+
+                mlab.quiver3d(mid_face_coords[:,0], mid_face_coords[:,1], mid_face_coords[:,2],
+                    normals[:,0], normals[:,1], normals[:,2],
+                    color=(0.,128./255,128./255),line_width=2)
+
+                mlab.show()
+
+        return normals
+
+>>>>>>> upstream/master
 
 
     def Medians(self, geometric=True):
         """Computes median of the elements tri, tet, quad, hex based on the interpolation function
 
             input:
+<<<<<<< HEAD
                 geometric           [Bool] geometrically computes median with relying on FEM bases
+=======
+                geometric           [Bool] geometrically computes median without relying on FEM bases
+>>>>>>> upstream/master
             retruns:
                 median:             [ndarray] of median of elements
                 bases_at_median:    [1D array] of (p=1) bases at median
         """
 
+<<<<<<< HEAD
         assert self.element_type is not None
         assert self.elements is not None
         assert self.points is not None
@@ -1329,10 +1508,16 @@ class Mesh(object):
         median = None
 
 
+=======
+        self.__do_essential_memebers_exist__()
+
+        median = None
+>>>>>>> upstream/master
         if geometric == True:
             median = np.sum(self.points[self.elements,:],axis=1)/self.elements.shape[1]
             return median
 
+<<<<<<< HEAD
         if self.element_type == "tri":
             from Florence.FunctionSpace import Tri
             from Florence.QuadratureRules import FeketePointsTri
@@ -1366,12 +1551,54 @@ class Mesh(object):
 
         else:
             raise NotImplementedError('Median for {} elements not implemented yet'.format(self.element_type))
+=======
+        else:
+            try:
+                from Florence.FunctionSpace import Tri, Tet
+                from Florence.QuadratureRules import FeketePointsTri, FeketePointsTet
+            except ImportError:
+                raise ImportError("This functionality requires florence's support")
+
+            if self.element_type == "tri":
+
+                eps = FeketePointsTri(2)
+                middle_point_isoparametric = eps[6,:]
+                if not np.isclose(sum(middle_point_isoparametric),-0.6666666):
+                    raise ValueError("Median of triangle does not match [-0.3333,-0.3333]. "
+                        "Did you change your nodal spacing or interpolation functions?")
+
+                hpBases = Tri.hpNodal.hpBases
+                bases_for_middle_point = hpBases(0,middle_point_isoparametric[0],
+                    middle_point_isoparametric[1])[0]
+                median = np.einsum('ijk,j',self.points[self.elements[:,:3],:],bases_for_middle_point)
+
+            elif self.element_type == "tet":
+
+                middle_point_isoparametric = FeketePointsTet(3)[21]
+                if not np.isclose(sum(middle_point_isoparametric),-1.5):
+                    raise ValueError("Median of tetrahedral does not match [-0.5,-0.5,-0.5]. "
+                        "Did you change your nodal spacing or interpolation functions?")
+
+                # C = self.InferPolynomialDegree() - 1
+                hpBases = Tet.hpNodal.hpBases
+                bases_for_middle_point = hpBases(0,middle_point_isoparametric[0],
+                    middle_point_isoparametric[1],middle_point_isoparametric[2])[0]
+
+                median = np.einsum('ijk,j',self.points[self.elements[:,:4],:],bases_for_middle_point)
+
+            else:
+                raise NotImplementedError('Median for {} elements not implemented yet'.format(self.element_type))
+>>>>>>> upstream/master
 
         return median, bases_for_middle_point
 
 
     def FindElementContainingPoint(self, point, algorithm="fem", find_parametric_coordinate=True,
+<<<<<<< HEAD
         scaling_factor=5., tolerance=1.0e-7, maxiter=20, use_simple_bases=False):
+=======
+        scaling_factor=5., tolerance=1.0e-7, maxiter=20, use_simple_bases=False, return_on_geometric_finds=False):
+>>>>>>> upstream/master
         """Find which element does a point lie in using specificed algorithm.
             The FEM isoparametric coordinate of the point is returned as well.
             If the isoparametric coordinate of the point is not required, issue find_parametric_coordinate=False
@@ -1386,6 +1613,17 @@ class Mesh(object):
                                         then tries all possible combination of initial guesses to get the FEM
                                         isoparametric point. Trying all possible combination with FEM can be potentially
                                         more costly since bounding box size can be large.
+<<<<<<< HEAD
+=======
+
+                return_on_geometric_finds:
+                                        [bool] if geometric algorithm is chosen and this option is on, then it returns
+                                        the indices of elements as soon as the volume check and no further checks are
+                                        done. This is useful for situations when searching for points that are meant to
+                                        be in the interior of the elements rather than at the boundaries or nodes
+                                        otherwise the number of elements returned by geometric algorithm is going to be
+                                        more than one
+>>>>>>> upstream/master
             return:
                 element_index           [int/1D array of ints] element(s) containing the point.
                                         If the point is shared between many elements a 1D array is returned
@@ -1398,7 +1636,11 @@ class Mesh(object):
         if C > 0:
             warn("Note that finding a point within higher order curved mesh is not supported yet")
         if C > 0 and algorithm == "geometric":
+<<<<<<< HEAD
             warn("High order meshes are not supported using geometric algorthims. I am going to operate on linear mesh")
+=======
+            warn("High order meshes are not supported using geometric algorithim. I am going to operate on linear mesh")
+>>>>>>> upstream/master
             if use_simple_bases:
                 raise ValueError("Simple bases for high order elements are not available")
                 return
@@ -1456,10 +1698,23 @@ class Mesh(object):
             elif ndim==2:
                 for i in range(self.nelem):
                     coord = self.points[self.elements[i,:],:]
+<<<<<<< HEAD
                     p_iso = PointInversionIsoparametricFEM(self.element_type, C, coord, point,
                         tolerance=tolerance, maxiter=maxiter, verbose=True)
                     if p_iso[0] >= -1. and p_iso[0] <=1. and \
                         p_iso[1] >= -1. and p_iso[1] <=1.:
+=======
+                    p_iso, converged = PointInversionIsoparametricFEM(self.element_type, C, coord, point,
+                        tolerance=tolerance, maxiter=maxiter, verbose=True)
+                    # if p_iso[0] >= -1. and p_iso[0] <=1. and \
+                    #     p_iso[1] >= -1. and p_iso[1] <=1.:
+                    #     candidate_element, candidate_piso = i, p_iso
+                    #     break
+                    if  (p_iso[0] > -1. or np.isclose(p_iso[0],-1.,rtol=tolerance)) and \
+                        (p_iso[0] < 1.  or np.isclose(p_iso[0], 1.,rtol=tolerance)) and \
+                        (p_iso[1] > -1. or np.isclose(p_iso[1],-1.,rtol=tolerance)) and \
+                        (p_iso[1] < 1.  or np.isclose(p_iso[1],-1.,rtol=tolerance)) :
+>>>>>>> upstream/master
                         candidate_element, candidate_piso = i, p_iso
                         break
 
@@ -1506,6 +1761,7 @@ class Mesh(object):
                 elems = np.isclose(criterion_check,0.,rtol=tolerance)
                 elems_idx = np.where(elems==True)[0]
 
+<<<<<<< HEAD
                 for i in range(len(elems_idx)):
                     coord = self.points[self.elements[elems_idx[i],:],:]
                     # TRY ALL POSSIBLE INITIAL GUESSES - THIS IS CHEAP AS THE SEARCH SPACE CONTAINS ONLY A
@@ -1528,6 +1784,70 @@ class Mesh(object):
 
             else:
                 raise NotImplementedError("Not implemented yet")
+=======
+            elif self.element_type == "quad":
+
+                from Florence.QuadratureRules.GaussLobattoPoints import GaussLobattoPointsQuad
+                initial_guesses = GaussLobattoPointsQuad(C)
+
+                def GetAreaQuad(a0,b0,c0,d0):
+                    # AREA OF QUAD ABCD = AREA OF ABC + AREA OF ACD
+                    a00 = np.ones((a0.shape[0],3),dtype=np.float64); a00[:,:2] = a0
+                    b00 = np.ones((b0.shape[0],3),dtype=np.float64); b00[:,:2] = b0
+                    c00 = np.ones((c0.shape[0],3),dtype=np.float64); c00[:,:2] = c0
+                    d00 = np.ones((d0.shape[0],3),dtype=np.float64); d00[:,:2] = d0
+
+                    # FIND AREAS ABC
+                    area0 = np.abs(np.linalg.det(np.dstack((a00,b00,c00))))
+                    # FIND AREAS ACD
+                    area1 = np.abs(np.linalg.det(np.dstack((a00,c00,d00))))
+                    # FIND AREAS OF ALL THE ELEMENTS
+                    area = 0.5*(area0+area1)
+
+                    return area
+
+                a = self.points[self.elements[:,0],:]
+                b = self.points[self.elements[:,1],:]
+                c = self.points[self.elements[:,2],:]
+                d = self.points[self.elements[:,3],:]
+                o = np.tile(point,self.nelem).reshape(self.nelem,a.shape[1])
+
+                # TOTAL VOLUME
+                vol = self.Areas()
+                # PARTS' VOLUMES - DONT CHANGE THE ORDERING OF SPECIALLY vol1
+                vol0 = GetAreaQuad(o,c,b,a)
+                vol1 = GetAreaQuad(o,a,d,c)
+
+                criterion_check = vol0+vol1-vol
+                elems = np.isclose(criterion_check,0.,rtol=tolerance)
+                elems_idx = np.where(elems==True)[0]
+
+            else:
+                raise NotImplementedError("Not implemented yet")
+
+            if return_on_geometric_finds:
+                return elems_idx
+
+            for i in range(len(elems_idx)):
+                coord = self.points[self.elements[elems_idx[i],:],:]
+                # TRY ALL POSSIBLE INITIAL GUESSES - THIS IS CHEAP AS THE SEARCH SPACE CONTAINS ONLY A
+                # FEW ELEMENTS
+                for guess in initial_guesses:
+                    p_iso, converged = PointInversionIsoparametricFEM(self.element_type, C, coord, point,
+                        tolerance=tolerance, maxiter=maxiter, verbose=True,
+                        use_simple_bases=use_simple_bases, initial_guess=guess)
+                    if converged:
+                        break
+
+                if converged:
+                    candidate_element, candidate_piso = elems_idx[i], p_iso
+                    break
+
+            if find_parametric_coordinate:
+                return candidate_element, candidate_piso
+            else:
+                return candidate_element
+>>>>>>> upstream/master
 
 
 
@@ -2466,6 +2786,7 @@ class Mesh(object):
         else:
             raise ValueError("Element type not understood")
 
+<<<<<<< HEAD
         # # LUKE OLSON'S READER - VERY SLOW
         # # --------------------------------------------
         # has_gmsh = False
@@ -2499,6 +2820,8 @@ class Mesh(object):
 
         #     return
         # # --------------------------------------------
+=======
+>>>>>>> upstream/master
 
         # NEW FAST READER
         var = 0 # for old gmsh versions - needs checks
@@ -2533,6 +2856,10 @@ class Mesh(object):
                 self.nelem = int(plist[0])
                 break
 
+<<<<<<< HEAD
+=======
+        ns = self.InferNumberOfNodesPerElement(p=1,element_type=element_type)
+>>>>>>> upstream/master
         # Re-read
         points, elements, faces, face_to_surface = [],[], [], []
         for line_counter, line in enumerate(open(filename)):
@@ -2548,7 +2875,12 @@ class Mesh(object):
                     points.append([float(i) for i in plist[1:]])
                 if line_counter > rem_nelem and line_counter < self.nelem+rem_nelem+1:
                     if int(plist[1]) == el:
+<<<<<<< HEAD
                         elements.append([int(i) for i in plist[5:]])
+=======
+                        # elements.append([int(i) for i in plist[5:]])
+                        elements.append([int(i) for i in plist[-ns:]])
+>>>>>>> upstream/master
 
                     # WRITE SURFACE INFO - CERTAINLY ONLY IF ELEMENT TYPE IS QUADS/TRIS
                     if read_surface_info:
@@ -2556,7 +2888,10 @@ class Mesh(object):
                             faces.append([int(i) for i in plist[5:]])
                             face_to_surface.append(int(plist[4]))
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
         self.points = np.array(points,copy=True)
         self.elements = np.array(elements,copy=True) - 1
         # CORRECT
@@ -2577,6 +2912,7 @@ class Mesh(object):
                 if self.face_to_surface.shape[0]==0:
                     self.face_to_surface = None
 
+<<<<<<< HEAD
         # print(self.ndim, self.nnode, self.nelem, rem_nnode, rem_nelem, rem_faces)
         if self.points.shape[1] == 3:
             if np.allclose(self.points[:,2],0.):
@@ -2584,6 +2920,13 @@ class Mesh(object):
         # self.InferElementType()
         self.element_type = element_type
         ndim = self.InferSpatialDimension()
+=======
+        if self.points.shape[1] == 3:
+            if np.allclose(self.points[:,2],0.):
+                self.points = np.ascontiguousarray(self.points[:,:2])
+
+        self.element_type = element_type
+>>>>>>> upstream/master
         if self.element_type == "tri" or self.element_type == "quad":
             self.GetEdges()
             self.GetBoundaryEdges()
@@ -2757,6 +3100,14 @@ class Mesh(object):
         else:
             self.points = content[3:self.nnode*4+3].reshape(self.nnode,4)[:,1:]
         self.elements = content[self.nnode*4+3:].astype(np.int64).reshape(self.nelem,11)[:,7:] - 1
+<<<<<<< HEAD
+=======
+
+        if self.points.shape[1] == 3:
+            if np.allclose(self.points[:,2],0.):
+                self.points = np.ascontiguousarray(self.points[:,:2])
+
+>>>>>>> upstream/master
         self.GetEdgesQuad()
         self.GetBoundaryEdgesQuad()
 
@@ -3185,7 +3536,11 @@ class Mesh(object):
             try:
                 from Florence.PostProcessing import PostProcess
                 from Florence.VariationalPrinciple import DisplacementFormulation
+<<<<<<< HEAD
             except IOError:
+=======
+            except ImportError:
+>>>>>>> upstream/master
                 raise RuntimeError("Writing high order elements to VTK is not supported yet")
             if result is not None and result.ndim > 1:
                 raise NotImplementedError("Writing multliple or vector/tensor valued results to binary vtk not supported yet")
@@ -3230,7 +3585,11 @@ class Mesh(object):
                                 cvdata={cellflag:result.ravel()},fname=filename)
                         elif result.shape[0] == self.points.shape[0]:
                             write_vtu(Verts=self.points, Cells={cellflag:elements},
+<<<<<<< HEAD
                                 pvdata=result,fname=filename)
+=======
+                                pvdata=result.ravel(),fname=filename)
+>>>>>>> upstream/master
                     else:
                         if result.shape[0] == self.nelem:
                             write_vtu(Verts=self.points, Cells={cellflag:elements},cdata=result,fname=filename)
@@ -3355,6 +3714,10 @@ class Mesh(object):
             self.elements = tri_func.simplices
             self.nelem = self.elements.shape[0]
             self.points = tri_func.points
+<<<<<<< HEAD
+=======
+            self.nnode = self.points.shape[0]
+>>>>>>> upstream/master
             self.GetBoundaryEdgesTri()
 
         elif element_type == "quad":
@@ -3374,6 +3737,10 @@ class Mesh(object):
             self.element_type = "quad"
             self.elements = elements
             self.points = coordinates
+<<<<<<< HEAD
+=======
+            self.nnode = self.points.shape[0]
+>>>>>>> upstream/master
             self.GetBoundaryEdgesQuad()
             self.GetEdgesQuad()
 
@@ -3689,15 +4056,34 @@ class Mesh(object):
         if ncirc % 2 != 0 or ncirc < 2:
             ncirc = (ncirc // 2)*2 + 2
 
+<<<<<<< HEAD
 
         radius = np.linspace(inner_radius,outer_radius,nrad)
         points = np.zeros((1,2),dtype=np.float64)
         for i in range(nrad):
+=======
+        # radius = np.linspace(inner_radius,outer_radius,nrad)
+        # points = np.zeros((1,2),dtype=np.float64)
+        # for i in range(nrad):
+        #     t = np.linspace(start_angle,end_angle,ncirc+1)
+        #     x = radius[i]*np.cos(t)[::-1]
+        #     y = radius[i]*np.sin(t)[::-1]
+        #     points = np.vstack((points,np.array([x,y]).T))
+        # points = points[ncirc+2:,:]
+
+        radius = np.linspace(inner_radius,outer_radius,nrad-1)
+        points = np.zeros((1,2),dtype=np.float64)
+        for i in range(nrad-1):
+>>>>>>> upstream/master
             t = np.linspace(start_angle,end_angle,ncirc+1)
             x = radius[i]*np.cos(t)[::-1]
             y = radius[i]*np.sin(t)[::-1]
             points = np.vstack((points,np.array([x,y]).T))
+<<<<<<< HEAD
         points = points[ncirc+2:,:]
+=======
+        points = points[1:,:]
+>>>>>>> upstream/master
 
         points[:,0] += center[0]
         points[:,1] += center[1]
@@ -4046,7 +4432,11 @@ class Mesh(object):
 
 
     def Parallelepiped(self,lower_left_rear_point=(0,0,0), upper_right_front_point=(2,4,10),
+<<<<<<< HEAD
         nx=2, ny=4, nz=10, element_type="tet"):
+=======
+        nx=2, ny=4, nz=10, element_type="hex"):
+>>>>>>> upstream/master
         """Creates a tet/hex mesh on rectangular parallelepiped"""
 
         if self.elements is not None and self.points is not None:
@@ -4088,6 +4478,10 @@ class Mesh(object):
 
         self.elements = elements
         self.points = coordinates
+<<<<<<< HEAD
+=======
+        self.nnode = self.points.shape[0]
+>>>>>>> upstream/master
 
         self.GetBoundaryFacesHex()
         self.GetBoundaryEdgesHex()
@@ -4098,7 +4492,11 @@ class Mesh(object):
             sys.stdout = sys.__stdout__
 
 
+<<<<<<< HEAD
     def Cube(self, lower_left_rear_point=(0.,0.,0.), side_length=1, nx=5, ny=5, nz=5, n=None, element_type="tet"):
+=======
+    def Cube(self, lower_left_rear_point=(0.,0.,0.), side_length=1, nx=5, ny=5, nz=5, n=None, element_type="hex"):
+>>>>>>> upstream/master
         """Creates a quad/tri mesh on a cube
 
             input:
@@ -4237,10 +4635,17 @@ class Mesh(object):
 
 
     def HollowSphere(self, inner_radius=9., outer_radius=10.,
+<<<<<<< HEAD
         ncirc=5, nrad=5, nthick=1):
 
         self.SphericalArc(inner_radius=inner_radius, outer_radius=outer_radius,
             ncirc=ncirc, nrad=nrad, nthick=nthick)
+=======
+        ncirc=5, nrad=5, nthick=1, element_type="hex"):
+
+        self.SphericalArc(inner_radius=inner_radius, outer_radius=outer_radius,
+            ncirc=ncirc, nrad=nrad, nthick=nthick, element_type=element_type)
+>>>>>>> upstream/master
 
         # Mirror self in X, Y & Z
         for i in range(2):
@@ -4384,7 +4789,11 @@ class Mesh(object):
         """
 
         mesh = base_mesh
+<<<<<<< HEAD
         if mesh != None:
+=======
+        if mesh is not None:
+>>>>>>> upstream/master
             if not isinstance(mesh,Mesh):
                 raise ValueError("Base mesh has to be instance of class Florence.Mesh")
             else:
@@ -4399,8 +4808,14 @@ class Mesh(object):
             mesh = deepcopy(self)
             self.__reset__()
 
+<<<<<<< HEAD
         # if mesh.IsHighOrder:
             # raise NotImplementedError("Extruding high order meshes is not supported yet")
+=======
+        if mesh.points.ndim == 2:
+            if mesh.points.shape[1] == 3:
+                raise ValueError("Cannot extrude a mesh which already has 3D nodal coordinates")
+>>>>>>> upstream/master
 
         nlong = int(nlong)
         if nlong==0:
@@ -4481,6 +4896,40 @@ class Mesh(object):
             return points
 
 
+<<<<<<< HEAD
+=======
+    def RemoveDuplicateNodes(self, deci=8, tol=1e-08):
+        """Remove duplicate points in the mesh
+        """
+
+        self.__do_essential_memebers_exist__()
+
+        from Florence.Tensor import remove_duplicates_2D, makezero
+
+        makezero(self.points,tol=1e-10)
+
+        points, idx_points, inv_points = remove_duplicates_2D(self.points, decimals=8)
+        if points.shape[0] == self.points.shape[0]:
+            return
+
+        unique_elements, inv_elements = np.unique(self.elements,return_inverse=True)
+        unique_elements = unique_elements[inv_points]
+        elements = unique_elements[inv_elements]
+        elements = elements.reshape(self.elements.shape)
+
+        # RECOMPUTE EVERYTHING
+        self.elements = np.ascontiguousarray(elements, dtype=np.int64)
+        self.points = np.ascontiguousarray(points, dtype=np.float64)
+        self.nnode = self.points.shape[0]
+
+        if self.element_type == "tri" or self.element_type == "quad":
+            self.GetEdges()
+            self.GetBoundaryEdges()
+        elif self.element_type == "tet" or self.element_type == "hex":
+            self.GetFaces()
+            self.GetBoundaryFaces()
+            self.GetBoundaryEdges()
+>>>>>>> upstream/master
 
 
     def RemoveElements(self, xyz_min_max, element_removal_criterion="all", keep_boundary_only=False, return_removed_mesh=False,
@@ -4757,8 +5206,14 @@ class Mesh(object):
         if len(criteria.keys()) > 1:
             raise ValueError("Smoothing criteria should be a dictionry with only one key")
 
+<<<<<<< HEAD
         criterion = criteria.keys()[0]
         number = criteria.values()[0]
+=======
+
+        criterion = list(criteria.keys())[0]
+        number = list(criteria.values())[0]
+>>>>>>> upstream/master
 
         if "aspect_ratio" in insensitive(criterion):
             quantity = self.AspectRatios()
@@ -4766,6 +5221,11 @@ class Mesh(object):
             quantity = self.Areas()
         elif "volume" in insensitive(criterion):
             quantity = self.Volumes()
+<<<<<<< HEAD
+=======
+        else:
+            quantity = self.AspectRatios()
+>>>>>>> upstream/master
 
         non_smooth_elements_idx = np.where(quantity >= number)[0]
 
@@ -4805,8 +5265,13 @@ class Mesh(object):
             from Florence.FunctionSpace import Line, Tri, Quad, Tet, Hex
             from Florence.FunctionSpace.OneDimensional.Line import Lagrange
             from Florence.Tensor import remove_duplicates_2D
+<<<<<<< HEAD
         except IOError:
             raise IOError("This functionality requires florence's support")
+=======
+        except ImportError:
+            raise ImportError("This functionality requires florence's support")
+>>>>>>> upstream/master
 
 
         # WE NEED AN ACTUAL NDIM
@@ -4951,6 +5416,65 @@ class Mesh(object):
 
 
 
+<<<<<<< HEAD
+=======
+    def Partition(self, n=2, figure=None, show_plot=False, compute_boundary_info=True):
+        """Partitions any type of mesh low and high order
+            into a set of meshes.
+            Returns a list of partitioned meshes and their index map
+            into the origin mesh as well as list of node maps
+        """
+
+        num_par = n
+        partitioned_indices = np.array_split(np.arange(self.nelem),num_par)
+        nelems = [a.shape[0] for a in partitioned_indices]
+
+        pmesh, partitioned_nodes_indices = [], []
+        for i in range(len(nelems)):
+            pmesh.append(self.GetLocalisedMesh(partitioned_indices[i], compute_boundary_info=compute_boundary_info))
+            partitioned_nodes_indices.append(np.unique(self.elements[partitioned_indices[i],:]))
+
+
+        if show_plot:
+
+            import itertools
+            colors = itertools.cycle(('#D1655B','#44AA66','#FACD85','#70B9B0','#72B0D7','#E79C5D',
+                    '#4D5C75','#FFF056','#558C89','#F5CCBA','#A2AB58','#7E8F7C','#005A31'))
+
+            if self.element_type == "tri" or self.element_type == "quad":
+                try:
+                    from Florence.PostProcessing import PostProcess
+                except ImportError:
+                    raise ImportError("This functionality requires florence's support")
+
+                import matplotlib.pyplot as plt
+                if figure is None:
+                    figure = plt.figure()
+
+                pp = PostProcess(2,2)
+                for mesh in pmesh:
+                    pp.CurvilinearPlot(mesh,figure=figure,show_plot=False,color=colors.next(),interpolation_degree=0)
+
+                plt.show()
+
+            elif self.element_type == "tet" or self.element_type == "hex" or self.element_type == "line":
+                import os
+                os.environ['ETS_TOOLKIT'] = 'qt4'
+                from mayavi import mlab
+
+                if figure is None:
+                    figure = mlab.figure(bgcolor=(1,1,1),fgcolor=(1,1,1),size=(1000,800))
+
+                for mesh in pmesh:
+                    mesh.SimplePlot(figure=figure,show_plot=False,color=colors.next())
+
+                mlab.show()
+
+        return pmesh, partitioned_indices, partitioned_nodes_indices
+
+
+
+>>>>>>> upstream/master
     @staticmethod
     def TriangularProjection(c1=(0,0), c2=(2,0), c3=(2,2), points=None, npoints=10, equally_spaced=True):
         """Builds an instance of Mesh on a triangular region through FE interpolation
@@ -5098,7 +5622,11 @@ class Mesh(object):
         hpBases = Tet.hpNodal.hpBases
         for i in range(points.shape[0]):
             BasesTet[:,i] = hpBases(0,points[i,0],points[i,1],points[i,2],
+<<<<<<< HEAD
                 Transform=1,EvalOpt=1,EquallySpacedPoints=equally_spaced)[0]
+=======
+                Transform=1,EvalOpt=1,equally_spaced=equally_spaced)[0]
+>>>>>>> upstream/master
         makezero(BasesTet,tol=1e-10)
 
         # func = Delaunay(points,qhull_options="QJ") # this does not produce the expected connectivity
@@ -5262,6 +5790,194 @@ class Mesh(object):
         return is_high_order
 
 
+<<<<<<< HEAD
+=======
+    @property
+    def IsCurvilinear(self):
+
+        self.__do_essential_memebers_exist__()
+
+        ndim = self.InferSpatialDimension()
+        p = self.InferPolynomialDegree()
+
+        is_curvilinear = False
+
+        if self.element_type != "line":
+            # FOR LINE ELEMENTS THIS APPROACH DOES NOT WORK AS JACOBIAN IS NOT WELL DEFINED
+
+            # GET CURVED VOLUME
+            curved_vol = self.Sizes().sum()
+            # GET PLANAR VOLUME
+            if self.element_type == "tet" or self.element_type == "hex":
+                planar_vols = self.Volumes()
+            elif self.element_type == "tri" or self.element_type == "quad":
+                planar_vols = self.Areas()
+            elif self.element_type == "line":
+                planar_vols = self.Lengths()
+            planar_vol = planar_vols.sum()
+            # COMPARE THE TWO
+            if not np.isclose(planar_vol, curved_vol, rtol=1e-6, atol=1e-6):
+                is_curvilinear = True
+
+            return is_curvilinear
+
+        # else:
+        #     # ANOTHER PROMISING TECHNIQUE FOR ALL TYPES OF ELEMENTS.
+        #     # BUT IT ALSO DOES NOT WORK FOR LINES
+        #     # IT ALSO DOES NOT WORK FOR 3D ELEMENTS AS WE ONLY TESSELATE SURFACES NOT VOLUMES
+        #     from Florence.PostProcessing import PostProcess
+        #     tmesh = PostProcess(ndim,ndim).Tessellate(self,np.zeros_like(self.points),interpolation_degree=0)
+        #     tmesh.RemoveDuplicateNodes()
+        #     error = tmesh.Lengths().sum() - self.Lengths().sum()
+        #     if not np.isclose(error, 0., rtol=1e-6, atol=1e-6):
+        #         is_curvilinear = True
+
+
+        # ACTIVE ONLY FOR LINE ELEMENTS RIGHT NOW,
+        # ALTERNATIVELY FOR LINE WE CAN CHECK COLINEARITY
+        # THAT WAY THIS FUNCTION WOULD NOT DEPEND ON IsEquallySpaced
+        # VERY SIMPLE WAY TO CHECK IF A MESH IS CURVED
+        if p == 1:
+            is_curvilinear = False
+        else:
+            sys.stdout = open(os.devnull, "w")
+
+            mesh = deepcopy(self)
+            mesh = mesh.GetLinearMesh(remap=True)
+            # NOTE THAT IF OTHER ARGS WERE PASSED TO GetHighOrderMesh
+            # THIS WILL FAIL
+            if not self.IsEquallySpaced:
+                mesh.GetHighOrderMesh(p=p, equally_spaced=False)
+                error = np.linalg.norm(mesh.points - self.points)
+                if not np.isclose(error, 0., rtol=1e-6, atol=1e-6):
+                    is_curvilinear = True
+            else:
+                mesh = mesh.GetLinearMesh(remap=True)
+                mesh.GetHighOrderMesh(p=p, equally_spaced=True)
+                error = np.linalg.norm(mesh.points - self.points)
+                if not np.isclose(error, 0., rtol=1e-6, atol=1e-6):
+                    is_curvilinear = True
+
+            sys.stdout = sys.__stdout__
+
+
+        return is_curvilinear
+
+
+
+    @property
+    def IsEquallySpaced(self):
+
+        self.__do_essential_memebers_exist__()
+
+        # FOR CURVILINEAR MESHES THIS STRATEGY WILL FAIL
+        # HOWEVER AT THE MOMENT CALLING self.IsCurvilinear INTRODUCES
+        # CYCLIC DEPENDENCY FOR LINES. IN ESSENCE, SINCE WE FEA ARE DONE
+        # MAINLY ON FEKETE POINTS IF A CURVED MESH COMES IN IT WILL BE
+        # AUTOMATICALLY FALSE
+        is_equally_spaced = False
+        p = self.InferPolynomialDegree()
+        if p == 1:
+            # FOR p=1 THIS NEEDS TO BE FALSE - AFFECTS ELSEWHERE (TRACTION COMPUTATION)
+            is_equally_spaced = False
+        elif p == 2:
+            # FOR p=2 THIS IS ALWAYS TRUE
+            is_equally_spaced = True
+        elif p > 2:
+            try:
+                from Florence.QuadratureRules.EquallySpacedPoints import EquallySpacedPoints, EquallySpacedPointsTri, EquallySpacedPointsTet
+                from Florence.FunctionSpace import Line, Tri, QuadES, Tet, HexES
+                from Florence.MeshGeneration.NodeArrangement import NodeArrangementLine
+            except ImportError:
+                raise ValueError("This functionality requires Florence's support")
+
+
+            if self.element_type == "line":
+                ndim = 1
+                nsize = 2
+                eps = EquallySpacedPoints(ndim+1,p-1).ravel()
+                # ARRANGE NODES FOR LINES HERE (DONE ONLY FOR LINES) - IMPORTANT
+                node_aranger = NodeArrangementLine(p-1)
+                eps = eps[node_aranger]
+                # COMPUTE BASES FUNCTIONS AT ALL NODAL POINTS
+                Neval = np.zeros((nsize,eps.shape[0]),dtype=np.float64)
+                for i in range(0,eps.shape[0]):
+                    Neval[:,i] = Line.Lagrange(0,eps[i])[0]
+
+            elif self.element_type == "tri":
+                ndim = 2
+                nsize = 3
+                eps =  EquallySpacedPointsTri(p-1)
+                # COMPUTE BASES FUNCTIONS AT ALL NODAL POINTS
+                hpBases = Tri.hpNodal.hpBases
+                Neval = np.zeros((nsize,eps.shape[0]),dtype=np.float64)
+                for i in range(0,eps.shape[0]):
+                    Neval[:,i]  = hpBases(0,eps[i,0],eps[i,1],Transform=1,EvalOpt=1,equally_spaced=True)[0]
+
+            elif self.element_type == "quad":
+                ndim = 2
+                nsize = 4
+                eps = EquallySpacedPoints(ndim+1,p-1)
+                # COMPUTE BASES FUNCTIONS AT ALL NODAL POINTS
+                Neval = np.zeros((nsize,eps.shape[0]),dtype=np.float64)
+                for i in range(0,eps.shape[0]):
+                    Neval[:,i] = QuadES.Lagrange(0,eps[i,0],eps[i,1],arrange=1)[:,0]
+
+            elif self.element_type == "tet":
+                ndim = 3
+                nsize = 4
+                eps =  EquallySpacedPointsTet(p-1)
+                # COMPUTE BASES FUNCTIONS AT ALL NODAL POINTS
+                hpBases = Tet.hpNodal.hpBases
+                Neval = np.zeros((nsize,eps.shape[0]),dtype=np.float64)
+                for i in range(0,eps.shape[0]):
+                    Neval[:,i]  = hpBases(0,eps[i,0],eps[i,1],eps[i,2],Transform=1,EvalOpt=1,equally_spaced=True)[0]
+
+            elif self.element_type == "hex":
+                ndim = 3
+                nsize = 8
+                eps = EquallySpacedPoints(ndim+1,p-1)
+                # COMPUTE BASES FUNCTIONS AT ALL NODAL POINTS
+                Neval = np.zeros((nsize,eps.shape[0]),dtype=np.float64)
+                for i in range(0,eps.shape[0]):
+                    Neval[:,i] = HexES.Lagrange(0,eps[i,0],eps[i,1],eps[i,2],arrange=1)[:,0]
+
+
+            linear_points = self.points[self.elements[0,:nsize],:]
+            bench_points = np.dot(Neval.T,linear_points)
+
+            candidate_points = self.points[self.elements[0,:],:]
+
+            # CHECK IF MESH POINTS AND LINEAR PROJECTION POINTS MATCH
+            error = np.linalg.norm(bench_points - candidate_points)
+
+            if np.isclose(error, 0., rtol=1e-6, atol=1e-6):
+                is_equally_spaced = True
+
+
+        return is_equally_spaced
+
+
+    def IsSimilar(self,other):
+        """Checks if two meshes are similar.
+            Similarity is established in terms of element type.
+            This is not a property, since property methods can
+            take variables
+        """
+        self.__do_essential_memebers_exist__()
+        other.__do_essential_memebers_exist__()
+        return self.element_type == other.element_type
+
+
+    def IsEqualOrder(self,other):
+        """Checks if two meshes are equal order.
+            This is not a property, since property methods can
+            take variables
+        """
+        return self.InferPolynomialDegree() == other.InferPolynomialDegree()
+
+
+>>>>>>> upstream/master
     def GetNumberOfElements(self):
         if self.nelem != None:
             return self.nelem
@@ -5492,7 +6208,11 @@ class Mesh(object):
         return lmesh
 
 
+<<<<<<< HEAD
     def GetLocalisedMesh(self,elements, solution=None):
+=======
+    def GetLocalisedMesh(self, elements, solution=None, compute_boundary_info=True):
+>>>>>>> upstream/master
         """Make a new Mesh instance from part of a big mesh.
             Makes a copy and does not modify self
 
@@ -5524,11 +6244,21 @@ class Mesh(object):
         tmesh.points = self.points[unnodes,:]
         tmesh.nelem = tmesh.elements.shape[0]
         tmesh.nnode = tmesh.points.shape[0]
+<<<<<<< HEAD
         if tmesh.element_type == "hex" or tmesh.element_type == "tet":
             tmesh.GetBoundaryFaces()
             tmesh.GetBoundaryEdges()
         elif tmesh.element_type == "quad" or tmesh.element_type == "tri":
             tmesh.GetBoundaryEdges()
+=======
+
+        if compute_boundary_info:
+            if tmesh.element_type == "hex" or tmesh.element_type == "tet":
+                tmesh.GetBoundaryFaces()
+                tmesh.GetBoundaryEdges()
+            elif tmesh.element_type == "quad" or tmesh.element_type == "tri":
+                tmesh.GetBoundaryEdges()
+>>>>>>> upstream/master
 
         if solution is not None:
             if self.nelem != solution.shape[0]:
@@ -5540,6 +6270,12 @@ class Mesh(object):
                     solution = solution[elements,...]
             return tmesh, solution
 
+<<<<<<< HEAD
+=======
+        # MAKE MESH DATA CONTIGUOUS
+        tmesh.ChangeType()
+
+>>>>>>> upstream/master
         return tmesh
 
 
@@ -5601,11 +6337,19 @@ class Mesh(object):
             raise NotImplementedError("Converting to linear mesh with not implemented yet")
 
 
+<<<<<<< HEAD
         lmesh.elements = np.ascontiguousarray(lmesh.elements)
+=======
+        lmesh.elements = np.ascontiguousarray(lmesh.elements,dtype=np.int64)
+>>>>>>> upstream/master
         lmesh.points = np.copy(self.points)
         lmesh.degree = 1
         lmesh.element_type = self.element_type
         lmesh.nelem = lmesh.elements.shape[0]
+<<<<<<< HEAD
+=======
+        lmesh.nnode = lmesh.points.shape[0]
+>>>>>>> upstream/master
         lmesh.GetBoundaryFaces()
         lmesh.GetBoundaryEdges()
 
@@ -5909,6 +6653,11 @@ class Mesh(object):
             return NodeArrangementQuad(C)
         elif self.element_type == "tri":
             return NodeArrangementTri(C)
+<<<<<<< HEAD
+=======
+        elif self.element_type == "line":
+            return NodeArrangementLine(C)
+>>>>>>> upstream/master
         else:
             raise ValueError("Element type not understood")
 

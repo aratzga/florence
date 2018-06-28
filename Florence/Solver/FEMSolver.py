@@ -12,8 +12,14 @@ from Florence.Utils import insensitive
 from Florence.FiniteElements.Assembly import Assemble, AssembleExplicit
 from Florence.PostProcessing import *
 from Florence.Solver import LinearSolver
+<<<<<<< HEAD
 from Florence.TimeIntegrators import StructuralDynamicIntegrators
 from Florence.TimeIntegrators import ExplicitStructuralDynamicIntegrators
+=======
+from Florence.TimeIntegrators import LinearImplicitStructuralDynamicIntegrator
+from Florence.TimeIntegrators import NonlinearImplicitStructuralDynamicIntegrator
+from Florence.TimeIntegrators import ExplicitStructuralDynamicIntegrator
+>>>>>>> upstream/master
 from .LaplacianSolver import LaplacianSolver
 from Florence import Mesh
 
@@ -35,6 +41,10 @@ class FEMSolver(object):
         analysis_type="static",
         analysis_nature="nonlinear",
         analysis_subtype="implicit",
+<<<<<<< HEAD
+=======
+        linearised_electromechanics_solver="traction_based",
+>>>>>>> upstream/master
         is_geometrically_linearised=False,
         requires_geometry_update=True,
         requires_line_search=False,
@@ -47,16 +57,30 @@ class FEMSolver(object):
         newton_raphson_solution_tolerance=None,
         maximum_iteration_for_newton_raphson=50,
         iterative_technique="newton_raphson",
+<<<<<<< HEAD
         add_self_weight=False,
         mass_type=None,
         compute_mesh_qualities=True,
         parallelise=False,
+=======
+        reduce_quadrature_for_quads_hexes=True,
+        add_self_weight=False,
+        mass_type=None,
+        compute_mesh_qualities=False,
+        parallelise=False,
+        ncpu=None,
+        parallel_model=None,
+>>>>>>> upstream/master
         memory_model="shared",
         platform="cpu",
         backend="opencl",
         print_incremental_log=False,
         save_incremental_solution=False,
         incremental_solution_filename=None,
+<<<<<<< HEAD
+=======
+        incremental_solution_save_frequency=50,
+>>>>>>> upstream/master
         break_at_increment=-1,
         break_at_stagnation=True,
         include_physical_damping=False,
@@ -69,7 +93,13 @@ class FEMSolver(object):
         user_defined_stop_func=None,
         save_results=True,
         save_frequency=1,
+<<<<<<< HEAD
         has_contact=False):
+=======
+        memory_store_frequency=1,
+        has_contact=False,
+        activate_explicit_multigrid=False):
+>>>>>>> upstream/master
 
         # ASSUME TRUE IF AT LEAST ONE IS TRUE
         if has_low_level_dispatcher != optimise:
@@ -80,6 +110,10 @@ class FEMSolver(object):
         self.analysis_type = analysis_type
         self.analysis_subtype = analysis_subtype
 
+<<<<<<< HEAD
+=======
+        self.linearised_electromechanics_solver=linearised_electromechanics_solver # "traction_based" or "potential_based"
+>>>>>>> upstream/master
         self.is_geometrically_linearised = is_geometrically_linearised
         self.requires_geometry_update = requires_geometry_update
         self.requires_line_search = requires_line_search
@@ -92,6 +126,16 @@ class FEMSolver(object):
         self.save_results = save_results
         # SAVE AT EVERY N TIME STEP WHERE N=save_frequency
         self.save_frequency = int(save_frequency)
+<<<<<<< HEAD
+=======
+        self.incremental_solution_save_frequency = incremental_solution_save_frequency
+        if save_frequency != 1:
+            warn("save_frequency keyword is deprecated. Please use memory_store_fequency instead")
+        if save_frequency !=1 and memory_store_frequency !=1:
+            raise ValueError("Please use either save_frequency or memory_store_fequency, but not both")
+        if memory_store_frequency != 1:
+            self.save_frequency = int(memory_store_frequency)
+>>>>>>> upstream/master
 
         self.number_of_load_increments = number_of_load_increments
         self.load_factor = load_factor
@@ -104,17 +148,30 @@ class FEMSolver(object):
         self.include_physical_damping = include_physical_damping
         self.damping_factor = damping_factor
         self.add_self_weight = add_self_weight
+<<<<<<< HEAD
+=======
+        self.reduce_quadrature_for_quads_hexes = reduce_quadrature_for_quads_hexes
+>>>>>>> upstream/master
 
         self.compute_energy = compute_energy
         self.compute_energy_dissipation = compute_energy_dissipation
         self.compute_linear_momentum_dissipation = compute_linear_momentum_dissipation
 
         self.compute_mesh_qualities = compute_mesh_qualities
+<<<<<<< HEAD
         self.isScaledJacobianComputed = False
 
         self.vectorise = True
         self.parallel = parallelise
         self.no_of_cpu_cores = multiprocessing.cpu_count()
+=======
+        self.is_scaled_jacobian_computed = False
+
+        self.vectorise = True
+        self.parallel = parallelise
+        self.no_of_cpu_cores = ncpu
+        self.parallel_model = parallel_model # "pool", "context_manager", "queue", "joblib"
+>>>>>>> upstream/master
         self.memory_model = memory_model
         self.platform = platform
         self.backend = backend
@@ -129,6 +186,10 @@ class FEMSolver(object):
         self.user_defined_stop_func = user_defined_stop_func
 
         self.has_contact = has_contact
+<<<<<<< HEAD
+=======
+        self.activate_explicit_multigrid = activate_explicit_multigrid
+>>>>>>> upstream/master
 
         self.fem_timer = 0.
         self.assembly_time = 0.
@@ -137,6 +198,22 @@ class FEMSolver(object):
             self.newton_raphson_solution_tolerance = 10.*self.newton_raphson_tolerance
 
 
+<<<<<<< HEAD
+=======
+        # STORE A COPY OF SELF AT THE START TO RESET TO AT THE END
+        self.__save_state__()
+        # FOR INTERNAL PURPOSES WHEN WE DO NOT WANT TO REST
+        self.do_not_reset = False
+
+
+    def __save_state__(self):
+        self.__initialdict__ = deepcopy(self.__dict__)
+
+    def __reset_state__(self):
+        self.__dict__.update(self.__initialdict__)
+
+
+>>>>>>> upstream/master
     def __checkdata__(self, material, boundary_condition,
         formulation, mesh, function_spaces, solver, contact_formulation=None):
         """Checks the state of data for FEMSolver"""
@@ -172,12 +249,51 @@ class FEMSolver(object):
         if solver is None:
             solver = LinearSolver(linear_solver="direct", linear_solver_type="umfpack", geometric_discretisation=mesh.element_type)
 
+<<<<<<< HEAD
+=======
+        # CHECK MESH DIMENSION BEFORE ANY FURTHER ANALYSIS
+        if mesh.points.shape[1] == 3 and (mesh.element_type == "tri" or mesh.element_type == "quad"):
+            if np.allclose(mesh.points[:,2],0.):
+                mesh.points = np.ascontiguousarray(mesh.points[:,:2])
+            elif np.allclose(mesh.points[:,1],0.):
+                mesh.points = np.ascontiguousarray(mesh.points[:,[0,2]])
+            elif np.allclose(mesh.points[:,0],0.):
+                mesh.points = np.ascontiguousarray(mesh.points[:,1:])
+            else:
+                warn("Mesh spatial dimensionality is not correct for 2D. I will ignore Z coordinates")
+                mesh.points = np.ascontiguousarray(mesh.points[:,:2])
+
+        # TURN OFF PARALLELISM IF NOT AVAILABLE
+        if self.parallel:
+            if (formulation.fields == "mechanics" or formulation.fields == "electro_mechanics") \
+                and self.has_low_level_dispatcher:
+                if self.parallel_model is None:
+                    if self.analysis_type == "dynamic" and self.analysis_subtype == "explicit":
+                        self.parallel_model = "context_manager"
+                    else:
+                        self.parallel_model = "pool"
+            else:
+                warn("Parallelism cannot be activated right now")
+                self.parallel = False
+                self.no_of_cpu_cores = 1
+
+        if self.parallel:
+            if self.no_of_cpu_cores is None:
+                self.no_of_cpu_cores = multiprocessing.cpu_count()
+            # PARTITION THE MESH AND PREPARE
+            self.PartitionMeshForParallelFEM(mesh,self.no_of_cpu_cores,formulation.nvar)
+
+
+>>>>>>> upstream/master
         if material.ndim != mesh.InferSpatialDimension():
             # THIS HAS TO BE AN ERROR BECAUSE OF THE DYNAMIC NATURE OF MATERIAL
             raise ValueError("Material model and mesh are incompatible. Change the dimensionality of the material")
         ###########################################################################
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> upstream/master
         if material.mtype == "LinearElastic" and self.number_of_load_increments > 1 and self.analysis_type=="static":
             warn("Can not solve a linear elastic model in multiple step. "
                 "The number of load increments is going to be set to one (1). "
@@ -193,6 +309,11 @@ class FEMSolver(object):
             else:
                 self.has_prestress = False
 
+<<<<<<< HEAD
+=======
+
+        ##############################################################################
+>>>>>>> upstream/master
         if "Explicit" in material.mtype:
             if self.analysis_subtype == "implicit":
                 raise ValueError("Incorrect material model ({}) used for implicit analysis".format(material.mtype))
@@ -201,6 +322,7 @@ class FEMSolver(object):
                 self.mass_type = "lumped"
         if self.analysis_type == "static":
             if self.save_frequency != 1:
+<<<<<<< HEAD
                 warn("save_frequency must be one")
                 self.save_frequency = 1
         if self.analysis_type == "dynamic" and self.analysis_subtype=="implicit":
@@ -208,10 +330,26 @@ class FEMSolver(object):
                 warn("save_frequency must be one")
                 self.save_frequency = 1
 
+=======
+                warn("memory_store_frequency must be one")
+                self.save_frequency = 1
+        if self.analysis_type == "dynamic" and self.analysis_subtype=="implicit":
+            if self.save_frequency != 1:
+                warn("memory_store_frequency must be one")
+                self.save_frequency = 1
+        if self.analysis_type == "dynamic" and self.analysis_subtype == "explicit":
+            if self.number_of_load_increments < self.save_frequency:
+                raise ValueError("Number of load increments cannot be less than memory store frequency")
+            if self.number_of_load_increments < 3:
+                warn("Time step is excessively large for dynamic analysis. I will increase it by a bit")
+                self.number_of_load_increments = 3
+        ##############################################################################
+>>>>>>> upstream/master
 
 
         # GEOMETRY UPDATE FLAGS
         ###########################################################################
+<<<<<<< HEAD
         # DO NOT UPDATE THE GEOMETRY IF THE MATERIAL MODEL NAME CONTAINS
         # INCREMENT (CASE INSENSITIVE). VALID FOR ELECTROMECHANICS FORMULATION.
         self.requires_geometry_update = False
@@ -224,12 +362,33 @@ class FEMSolver(object):
         elif formulation.fields == "mechanics":
             if self.analysis_nature == "nonlinear" or self.has_prestress:
                 self.requires_geometry_update = True
+=======
+        self.requires_geometry_update = True
+        if formulation.fields == "mechanics":
+            if self.analysis_nature == "nonlinear" or self.has_prestress:
+                self.requires_geometry_update = True
+            else:
+                self.requires_geometry_update = False
+        # FOR DYNAMIC PROBLEMS GEOMETRY NEEDS TO BE UPDATED ALWAYS
+        if self.analysis_type == "dynamic":
+            if formulation.fields == "mechanics" or formulation.fields == "electro_mechanics":
+                self.requires_geometry_update = True
+        # FOR THESE FORMULATIONS ITS ALWAYS FALSE
+        if formulation.fields == "couple_stress" or formulation.fields == "flexoelectric" or formulation.fields == "electrostatics":
+            self.requires_geometry_update = False
+        # self.requires_geometry_update = False
+
+>>>>>>> upstream/master
 
         # CHECK IF MATERIAL MODEL AND ANALYSIS TYPE ARE COMPATIBLE
         #############################################################################
         if material.nature == "linear" and self.analysis_nature == "nonlinear":
             if formulation.fields != "electrostatics":
+<<<<<<< HEAD
                 raise RuntimeError("Cannot perform nonlinear analysis with linear model")
+=======
+                raise RuntimeError("Cannot perform nonlinear analysis with linear material model")
+>>>>>>> upstream/master
 
         if material.fields != formulation.fields:
             raise RuntimeError("Incompatible material model and formulation type")
@@ -240,8 +399,13 @@ class FEMSolver(object):
         ##############################################################################
 
         ##############################################################################
+<<<<<<< HEAD
         if boundary_condition.boundary_type == "straight":
             self.compute_mesh_qualities = False
+=======
+        if boundary_condition.boundary_type == "nurbs":
+            self.compute_mesh_qualities = True
+>>>>>>> upstream/master
         ##############################################################################
 
         ##############################################################################
@@ -266,17 +430,65 @@ class FEMSolver(object):
             warn("Energy is not going to be preserved due to physical damping")
         ##############################################################################
 
+<<<<<<< HEAD
         # CHANGE MESH DATA TYPE
         mesh.ChangeType()
         # ASSIGN ANALYSIS PARAMTER TO BOUNDARY CONDITION
         boundary_condition.analysis_type = self.analysis_type
         boundary_condition.analysis_nature = self.analysis_nature
+=======
+        ##############################################################################
+        if self.analysis_type == "static" and self.has_contact is True:
+            warn("Contact formulation does not get activated under static problems")
+        ##############################################################################
+
+        ##############################################################################
+        # AT THE MOMENT ALL HESSIANS SEEMINGLY HAVE THE SAME SIGNATURE SO THIS IS O.K.
+        try:
+            F = np.eye(material.ndim,material.ndim)[None,:,:]
+            E = np.random.rand(material.ndim)
+            material.Hessian(KinematicMeasures(F,self.analysis_nature),E)
+        except TypeError:
+            # CATCH ONLY TypeError. OTHER MATERIAL CONSTANT RELATED ERRORS ARE SELF EXPLANATORY
+            raise ValueError("Material constants for {} does not seem correct".format(material.mtype))
+        ##############################################################################
+
+        # CHANGE MESH DATA TYPE
+        mesh.ChangeType()
+
+        # ASSIGN ANALYSIS PARAMTER TO BOUNDARY CONDITION
+        boundary_condition.analysis_type = self.analysis_type
+        boundary_condition.analysis_nature = self.analysis_nature
+        ##############################################################################
+        if self.analysis_type == "dynamic" and self.analysis_subtype != "explicit":
+            boundary_condition.ConvertStaticsToDynamics(mesh, self.number_of_load_increments)
+        ##############################################################################
+
+        ##############################################################################
+        if boundary_condition.dirichlet_flags is not None:
+            # SPECIFIC CHECKS TO AVOID CONFUSING ERRORS OCCURING DOWN STREAM
+            ndim = mesh.InferSpatialDimension()
+            if boundary_condition.dirichlet_flags.ndim == 2:
+                if boundary_condition.dirichlet_flags.shape[1] != formulation.nvar:
+                    raise ValueError("Essential boundary conditions are not imposed correctly")
+            if formulation.fields == "mechanics":
+                if boundary_condition.dirichlet_flags.shape[1] != ndim:
+                    raise ValueError("Essential boundary conditions are not imposed correctly")
+            elif formulation.fields == "electro_mechanics":
+                if boundary_condition.dirichlet_flags.shape[1] != ndim+1:
+                    raise ValueError("Essential boundary conditions are not imposed correctly")
+        ##############################################################################
+>>>>>>> upstream/master
 
         return function_spaces, solver
 
 
 
     def __makeoutput__(self, mesh, TotalDisp, formulation=None, function_spaces=None, material=None):
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
         post_process = PostProcess(formulation.ndim,formulation.nvar)
         post_process.SetBases(postdomain=function_spaces[1], domain=function_spaces[0], boundary=None)
         post_process.SetAnalysis(analysis_type=self.analysis_type,
@@ -287,10 +499,17 @@ class FEMSolver(object):
         post_process.SetMaterial(material)
         post_process.SetFEMSolver(self)
 
+<<<<<<< HEAD
         if self.analysis_nature == "nonlinear" and self.compute_mesh_qualities:
             # COMPUTE QUALITY MEASURES
             post_process.ScaledJacobian = post_process.MeshQualityMeasures(mesh,TotalDisp,False,False)[3]
         elif self.isScaledJacobianComputed:
+=======
+        if self.compute_mesh_qualities and self.is_scaled_jacobian_computed is False:
+            # COMPUTE QUALITY MEASURES
+            post_process.ScaledJacobian = post_process.MeshQualityMeasures(mesh,TotalDisp,False,False)[3]
+        elif self.is_scaled_jacobian_computed:
+>>>>>>> upstream/master
             post_process.ScaledJacobian=self.ScaledJacobian
 
         if self.analysis_nature == "nonlinear":
@@ -308,8 +527,19 @@ class FEMSolver(object):
                 post_process.kinetic_power = formulation.kinetic_power
                 post_process.external_power = formulation.external_power
 
+<<<<<<< HEAD
         post_process.assembly_time = self.assembly_time
 
+=======
+
+        post_process.assembly_time = self.assembly_time
+
+        # AT THE END, WE CALL THE __reset_state__ TO RESET TO INITIAL STATE.
+        # THIS WAY WE CLEAR MONKEY PATCHED AND OTHER DATA STORED DURING RUN TIME
+        if self.do_not_reset is False:
+            self.__reset_state__()
+
+>>>>>>> upstream/master
         return post_process
 
 
@@ -317,7 +547,14 @@ class FEMSolver(object):
     def WhichFEMSolver():
         solver = None
         if self.analysis_type == "dynamic":
+<<<<<<< HEAD
             solver = "StructuralDynamicIntegrator"
+=======
+            if self.analysis_subtype == "explicit":
+                solver = "ExplicitStructuralDynamicIntegrator"
+            else:
+                solver = "StructuralDynamicIntegrator"
+>>>>>>> upstream/master
         else:
             if self.analysis_nature == "linear":
                 if self.number_of_load_increments > 1:
@@ -331,8 +568,15 @@ class FEMSolver(object):
 
     @property
     def WhichFEMSolvers():
+<<<<<<< HEAD
         solvers = ["LinearElasticity","IncrementalLinearElasticitySolver","NewtonRaphson","ModifiedNewtonRaphson",
             "NewtonRaphsonLineSearch","NewtonRaphsonArchLength","StructuralDynamicIntegrator"]
+=======
+        solvers = ["LinearElasticity","IncrementalLinearElasticitySolver",
+            "NewtonRaphson","ModifiedNewtonRaphson",
+            "NewtonRaphsonLineSearch","NewtonRaphsonArchLength",
+            "StructuralDynamicIntegrator", "ExplicitStructuralDynamicIntegrator"]
+>>>>>>> upstream/master
         print(solvers)
         return solvers
 
@@ -350,6 +594,7 @@ class FEMSolver(object):
         function_spaces, solver = self.__checkdata__(material, boundary_condition,
             formulation, mesh, function_spaces, solver, contact_formulation=contact_formulation)
         #---------------------------------------------------------------------------#
+<<<<<<< HEAD
 
         print('Pre-processing the information. Getting paths, solution parameters, mesh info, interpolation info etc...')
         print('Number of nodes is',mesh.points.shape[0], 'number of DoFs is', mesh.points.shape[0]*formulation.nvar)
@@ -359,6 +604,9 @@ class FEMSolver(object):
         elif formulation.ndim==3:
             print('Number of elements is', mesh.elements.shape[0], \
                  'and number of boundary nodes is', np.unique(mesh.faces).shape[0])
+=======
+        self.PrintPreAnalysisInfo(mesh, formulation)
+>>>>>>> upstream/master
         #---------------------------------------------------------------------------#
 
         # QUICK REDIRECT TO LAPLACIAN SOLVER
@@ -370,6 +618,48 @@ class FEMSolver(object):
             solution.assembly_time = laplacian_solver.assembly_time
             return solution
 
+<<<<<<< HEAD
+=======
+        # QUICK REDIRECT TO COUPLE STRESS SOLVER
+        if formulation.fields == "couple_stress" or formulation.fields == "flexoelectric":
+            from Florence.Solver import CoupleStressSolver
+            cs_solver = CoupleStressSolver()
+            cs_solver.__dict__.update(self.__dict__)
+            solution = cs_solver.Solve(formulation=formulation, mesh=mesh,
+                material=material, boundary_condition=boundary_condition,
+                function_spaces=function_spaces, solver=solver,
+                contact_formulation=contact_formulation)
+            solution.assembly_time = cs_solver.assembly_time
+            self.__dict__.update(cs_solver.__dict__)
+            return solution
+
+
+        # QUICK REDIRECT TO LINEARISED ELECTROMECHANICS SOLVERS
+        if formulation.fields == "electro_mechanics" and self.analysis_nature == "linear":
+            if self.analysis_type == "static":
+                # DISPATCH TO LINEARISED STATIC SOLVERS
+                from Florence.Solver import TractionBasedStaggeredSolver, PotentialBasedStaggeredSolver
+                if self.linearised_electromechanics_solver=="potential_based":
+                    linearised_solver = PotentialBasedStaggeredSolver()
+                else:
+                    linearised_solver = TractionBasedStaggeredSolver()
+                linearised_solver.__dict__.update(self.__dict__)
+
+                solution = linearised_solver.Solve(formulation=formulation, mesh=mesh,
+                    material=material, boundary_condition=boundary_condition,
+                    function_spaces=function_spaces, solver=solver)
+                solution.assembly_time = linearised_solver.assembly_time
+                self.__dict__.update(linearised_solver.__dict__)
+                return solution
+            elif self.analysis_type == "dynamic":
+                # CONTINUE DOWN FOR EXPLICIT DYNAMIC SOLVER
+                self.analysis_subtype = "explicit"
+                if self.mass_type == None:
+                    self.mass_type = "lumped"
+                boundary_condition.ConvertStaticsToDynamics(mesh, self.number_of_load_increments)
+
+
+>>>>>>> upstream/master
 
         # INITIATE DATA FOR THE ANALYSIS
         NodalForces, Residual = np.zeros((mesh.points.shape[0]*formulation.nvar,1),dtype=np.float64), \
@@ -379,7 +669,10 @@ class FEMSolver(object):
 
         # ALLOCATE FOR SOLUTION FIELDS
         if self.save_frequency == 1:
+<<<<<<< HEAD
             # TotalDisp = np.zeros((mesh.points.shape[0],formulation.nvar,self.number_of_load_increments),dtype=np.float32)
+=======
+>>>>>>> upstream/master
             TotalDisp = np.zeros((mesh.points.shape[0],formulation.nvar,self.number_of_load_increments),dtype=np.float64)
         else:
             TotalDisp = np.zeros((mesh.points.shape[0],formulation.nvar,
@@ -404,6 +697,7 @@ class FEMSolver(object):
         # ADOPT A DIFFERENT PATH FOR INCREMENTAL LINEAR ELASTICITY
         if formulation.fields == "mechanics" and self.analysis_nature != "nonlinear":
             if self.analysis_type == "static":
+<<<<<<< HEAD
                 # MAKE A COPY OF MESH, AS MESH POINTS WILL BE OVERWRITTEN
                 vmesh = deepcopy(mesh)
                 TotalDisp = self.IncrementalLinearElasticitySolver(function_spaces, formulation, vmesh, material,
@@ -428,14 +722,28 @@ class FEMSolver(object):
                         material=material, boundary_condition=boundary_condition,
                         contact_formulation=contact_formulation, solver=solver)
 
+=======
+                # DISPATCH INCREMENTAL LINEAR ELASTICITY SOLVER
+                TotalDisp = self.IncrementalLinearElasticitySolver(function_spaces, formulation, mesh, material,
+                    boundary_condition, solver, TotalDisp, Eulerx, NeumannForces)
+                return self.__makeoutput__(mesh, TotalDisp, formulation, function_spaces, material)
+
+>>>>>>> upstream/master
 
         # ASSEMBLE STIFFNESS MATRIX AND TRACTION FORCES FOR THE FIRST TIME
         if self.analysis_type == "static":
             K, TractionForces, _, _ = Assemble(self, function_spaces[0], formulation, mesh, material,
                 Eulerx, Eulerp)
         else:
+<<<<<<< HEAD
             fspace = function_spaces[0] if (mesh.element_type=="hex" or mesh.element_type=="quad") else function_spaces[1]
             # fspace = function_spaces[1]
+=======
+            if self.reduce_quadrature_for_quads_hexes:
+                fspace = function_spaces[0] if (mesh.element_type=="hex" or mesh.element_type=="quad") else function_spaces[1]
+            else:
+                fspace = function_spaces[1]
+>>>>>>> upstream/master
             # COMPUTE CONSTANT PART OF MASS MATRIX
             formulation.GetConstantMassIntegrand(fspace,material)
 
@@ -457,18 +765,40 @@ class FEMSolver(object):
 
         if self.analysis_type != 'static':
             if self.analysis_subtype != "explicit":
+<<<<<<< HEAD
                 structural_integrator = StructuralDynamicIntegrators()
                 TotalDisp = structural_integrator.Solver(function_spaces, formulation, solver,
                     K, M, NeumannForces, NodalForces, Residual,
                     mesh, TotalDisp, Eulerx, Eulerp, material, boundary_condition, self)
             else:
                 structural_integrator = ExplicitStructuralDynamicIntegrators()
+=======
+                boundary_condition.ConvertStaticsToDynamics(mesh, self.number_of_load_increments)
+                if self.analysis_nature == "nonlinear":
+                    structural_integrator = NonlinearImplicitStructuralDynamicIntegrator()
+                    TotalDisp = structural_integrator.Solver(function_spaces, formulation, solver,
+                        K, M, NeumannForces, NodalForces, Residual,
+                        mesh, TotalDisp, Eulerx, Eulerp, material, boundary_condition, self)
+                elif self.analysis_nature == "linear":
+                    structural_integrator = LinearImplicitStructuralDynamicIntegrator()
+                    TotalDisp = structural_integrator.Solver(function_spaces, formulation, solver,
+                        K, M, NeumannForces, NodalForces, Residual,
+                        mesh, TotalDisp, Eulerx, Eulerp, material, boundary_condition, self)
+            else:
+                structural_integrator = ExplicitStructuralDynamicIntegrator()
+>>>>>>> upstream/master
                 TotalDisp = structural_integrator.Solver(function_spaces, formulation, solver,
                     TractionForces, M, NeumannForces, NodalForces, Residual,
                     mesh, TotalDisp, Eulerx, Eulerp, material, boundary_condition, self)
 
         else:
+<<<<<<< HEAD
             if self.iterative_technique == "newton_raphson" or self.iterative_technique == "modified_newton_raphson":
+=======
+            if self.iterative_technique == "newton_raphson" or \
+                self.iterative_technique == "modified_newton_raphson" or \
+                self.iterative_technique == "snes":
+>>>>>>> upstream/master
                 TotalDisp = self.StaticSolver(function_spaces, formulation, solver,
                     K,NeumannForces,NodalForces,Residual,
                     mesh, TotalDisp, Eulerx, Eulerp, material, boundary_condition)
@@ -477,6 +807,11 @@ class FEMSolver(object):
                 TotalDisp = StaticSolverArcLength(self,function_spaces, formulation, solver,
                     K,NeumannForces,NodalForces,Residual,
                     mesh, TotalDisp, Eulerx, Eulerp, material, boundary_condition)
+<<<<<<< HEAD
+=======
+            else:
+                raise RuntimeError("Iterative technique for nonlinear solver not understood")
+>>>>>>> upstream/master
 
             # from FEMSolverDisplacementControl import StaticSolverDisplacementControl
             # TotalDisp = StaticSolverDisplacementControl(self,function_spaces, formulation, solver,
@@ -486,7 +821,11 @@ class FEMSolver(object):
         return self.__makeoutput__(mesh, TotalDisp, formulation, function_spaces, material)
 
 
+<<<<<<< HEAD
     def IncrementalLinearElasticitySolver(self, function_spaces, formulation, mesh, material,
+=======
+    def IncrementalLinearElasticitySolver(self, function_spaces, formulation, omesh, material,
+>>>>>>> upstream/master
                 boundary_condition, solver, TotalDisp, Eulerx, NeumannForces):
         """An icremental linear elasticity solver, in which the geometry is updated
             and the remaining quantities such as stresses and Hessians are based on Prestress flag.
@@ -495,6 +834,12 @@ class FEMSolver(object):
             of equations needed for non-linear analysis
         """
 
+<<<<<<< HEAD
+=======
+        # CREATE A COPY OF ORIGINAL MESH AS WE MODIFY IT
+        mesh = deepcopy(omesh)
+
+>>>>>>> upstream/master
         # CREATE POST-PROCESS OBJECT ONCE
         post_process = PostProcess(formulation.ndim,formulation.nvar)
         post_process.SetAnalysis(self.analysis_type, self.analysis_nature)
@@ -575,17 +920,23 @@ class FEMSolver(object):
                     self.number_of_load_increments = Increment
                     break
 
+<<<<<<< HEAD
             # COMPUTE SCALED JACBIAN FOR THE MESH
             if Increment == LoadIncrement - 1:
                 smesh = deepcopy(mesh)
                 smesh.points -= TotalDisp[:,:,-1]
 
+=======
+            # COMPUTE MESH QAULITY MEASURES
+            if Increment == LoadIncrement - 1:
+>>>>>>> upstream/master
                 if material.is_transversely_isotropic:
                     post_process.is_material_anisotropic = True
                     post_process.SetAnisotropicOrientations(material.anisotropic_orientations)
 
                 if self.compute_mesh_qualities:
                     post_process.SetBases(postdomain=function_spaces[1])
+<<<<<<< HEAD
                     qualities = post_process.MeshQualityMeasures(smesh,TotalDisp,plot=False,show_plot=False)
                     self.isScaledJacobianComputed = qualities[0]
                     self.ScaledJacobian = qualities[3]
@@ -593,6 +944,13 @@ class FEMSolver(object):
                 del smesh, post_process
                 gc.collect()
 
+=======
+                    dumTotalDisp = np.sum(TotalDisp[:,:,:Increment+1],axis=2)
+                    qualities = post_process.MeshQualityMeasures(omesh,dumTotalDisp,plot=False,show_plot=False)
+                    self.is_scaled_jacobian_computed = qualities[0]
+                    self.ScaledJacobian = qualities[3]
+
+>>>>>>> upstream/master
 
         # ADD EACH INCREMENTAL CONTRIBUTION TO MAKE IT CONSISTENT WITH THE NONLINEAR ANALYSIS
         for i in range(TotalDisp.shape[2]-1,0,-1):
@@ -655,10 +1013,15 @@ class FEMSolver(object):
                 Eulerx, Eulerp, K, Residual = self.ModifiedNewtonRaphson(function_spaces, formulation, solver,
                     Increment, K, NodalForces, Residual, mesh, Eulerx, Eulerp,
                     material, boundary_condition, AppliedDirichletInc)
+<<<<<<< HEAD
 
             # Eulerx, Eulerp, K, Residual = self.NewtonRaphsonLineSearch(function_spaces, formulation, solver,
             #     Increment, K, NodalForces, Residual, mesh, Eulerx, Eulerp,
             #     material, boundary_condition, AppliedDirichletInc)
+=======
+            else:
+                raise RuntimeError("Iterative technique for nonlinear solver not understood")
+>>>>>>> upstream/master
 
             # UPDATE DISPLACEMENTS FOR THE CURRENT LOAD INCREMENT
             TotalDisp[:,:formulation.ndim,Increment] = Eulerx - mesh.points
@@ -666,6 +1029,7 @@ class FEMSolver(object):
                 TotalDisp[:,-1,Increment] = Eulerp
 
             # PRINT LOG IF ASKED FOR
+<<<<<<< HEAD
             if self.print_incremental_log:
                 dmesh = Mesh()
                 dmesh.points = TotalDisp[:,:formulation.ndim,Increment]
@@ -686,6 +1050,9 @@ class FEMSolver(object):
                 else:
                     raise ValueError("No file name provided to save incremental solution")
 
+=======
+            self.LogSave(formulation, TotalDisp, Increment)
+>>>>>>> upstream/master
 
             print('\nFinished Load increment', Increment, 'in', time()-t_increment, 'seconds')
             try:
@@ -697,6 +1064,10 @@ class FEMSolver(object):
             # STORE THE INFORMATION IF NEWTON-RAPHSON FAILS
             if self.newton_raphson_failed_to_converge:
                 solver.condA = np.NAN
+<<<<<<< HEAD
+=======
+                Increment = Increment if Increment!=0 else 1
+>>>>>>> upstream/master
                 TotalDisp = TotalDisp[:,:,:Increment]
                 self.number_of_load_increments = Increment
                 break
@@ -1069,6 +1440,19 @@ class FEMSolver(object):
 
 
 
+<<<<<<< HEAD
+=======
+    def PrintPreAnalysisInfo(self, mesh, formulation):
+
+        print('Pre-processing the information. Getting paths, solution parameters, mesh info, interpolation info etc...')
+        print('Number of nodes is',mesh.points.shape[0], 'number of DoFs is', mesh.points.shape[0]*formulation.nvar)
+        if formulation.ndim==2:
+            print('Number of elements is', mesh.elements.shape[0], \
+                 'and number of boundary nodes is', np.unique(mesh.edges).shape[0])
+        elif formulation.ndim==3:
+            print('Number of elements is', mesh.elements.shape[0], \
+                 'and number of boundary nodes is', np.unique(mesh.faces).shape[0])
+>>>>>>> upstream/master
 
 
 
@@ -1089,8 +1473,47 @@ class FEMSolver(object):
 
             # SAVE INCREMENTAL SOLUTION IF ASKED FOR
             if self.save_incremental_solution:
+<<<<<<< HEAD
                 from scipy.io import savemat
                 if self.incremental_solution_filename is not None:
                     savemat(self.incremental_solution_filename+"_"+str(Increment),{'solution':TotalDisp[:,:,Increment]},do_compression=True)
                 else:
                     raise ValueError("No file name provided to save incremental solution")
+=======
+                # FOR BIG MESHES
+                if Increment % self.incremental_solution_save_frequency !=0:
+                    return
+                from scipy.io import savemat
+                filename = self.incremental_solution_filename
+                if filename is not None:
+                    if ".mat" in filename:
+                        filename = filename.split(".")[0]
+                    savemat(filename+"_"+str(Increment),
+                        {'solution':TotalDisp[:,:,Increment]},do_compression=True)
+                else:
+                    raise ValueError("No file name provided to save incremental solution")
+
+
+
+    def PartitionMeshForParallelFEM(self, mesh, n, nvar):
+
+        nnode = mesh.nnode
+        pmesh, pelement_indices, pnode_indices = mesh.Partition(n, compute_boundary_info=False)
+        map_facilitator = np.arange(nnode*nvar,dtype=np.int32).reshape(nnode,nvar)
+
+        partitioned_maps = []
+        for i, mesh in enumerate(pmesh):
+            pnodes = pnode_indices[i]
+            global_dofs = np.unique(pnodes[mesh.elements.ravel()])
+            local_dofs = np.unique(mesh.elements.ravel())
+            # global_to_local_dof_map = np.zeros((global_dofs.shape[0]*nvar,2),dtype=np.int32)
+            # global_to_local_dof_map[:,0] = map_facilitator[local_dofs,:].ravel()
+            # global_to_local_dof_map[:,1] = map_facilitator[global_dofs,:].ravel()
+
+            global_to_local_dof_map = map_facilitator[global_dofs,:].ravel()
+            partitioned_maps.append(global_to_local_dof_map)
+
+        self.pmesh, self.pelement_indices, self.pnode_indices, \
+            self.partitioned_maps = pmesh, pelement_indices, pnode_indices, partitioned_maps
+        # return pmesh, pelement_indices, pnode_indices, partitioned_maps
+>>>>>>> upstream/master

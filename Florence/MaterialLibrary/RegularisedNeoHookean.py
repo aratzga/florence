@@ -16,8 +16,13 @@ class RegularisedNeoHookean(Material):
         self.is_transversely_isotropic = False
         self.energy_type = "internal_energy"
         self.nature = "nonlinear"
+<<<<<<< HEAD
         self.fields = "mechanics"  
         
+=======
+        self.fields = "mechanics"
+
+>>>>>>> upstream/master
         if self.ndim==3:
             self.H_VoigtSize = 6
         elif self.ndim==2:
@@ -27,26 +32,42 @@ class RegularisedNeoHookean(Material):
         self.has_low_level_dispatcher = False
 
     def KineticMeasures(self,F,ElectricFieldx=0, elem=0):
+<<<<<<< HEAD
         from Florence.MaterialLibrary.LLDispatch._RegularisedNeoHookean_ import KineticMeasures
         return KineticMeasures(self,F)
         
 
     def Hessian(self,StrainTensors,ElectricFieldx=None,elem=0,gcounter=0):
         
+=======
+        return
+
+
+    def Hessian(self,StrainTensors,ElectricFieldx=None,elem=0,gcounter=0):
+
+>>>>>>> upstream/master
         I = StrainTensors['I']
         J = StrainTensors['J'][gcounter]
         # Jb = 1.27168554933
         Jb = self.Jbar[elem]
 
         mu2 = self.mu/J- self.lamb*(J-Jb)
+<<<<<<< HEAD
         lamb2 = self.lamb*(2*J-Jb) 
+=======
+        lamb2 = self.lamb*(2*J-Jb)
+>>>>>>> upstream/master
 
         H_Voigt_n = lamb2*self.vIijIkl+mu2*self.vIikIjl
 
         # return H_Voigt
 
         H_Voigt_l = Voigt(self.lamb*einsum('ij,kl',I,I)+self.mu*(einsum('ik,jl',I,I)+einsum('il,jk',I,I)) ,1)
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> upstream/master
         alp = 0.1
         # H_Voigt = (1-alp)*H_Voigt_l + alp*H_Voigt_n
         H_Voigt = H_Voigt_n
@@ -62,7 +83,11 @@ class RegularisedNeoHookean(Material):
 
         # mu = self.mu
         # lamb = self.lamb
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> upstream/master
         # return 1.0*mu/J*b + (lamb*(J-1.0)-mu/J)*I
 
         mu = self.mu
@@ -76,7 +101,11 @@ class RegularisedNeoHookean(Material):
         elif self.ndim == 2:
             tre = trace(strain) + 1
 
+<<<<<<< HEAD
         sigma_linear =  2.*mu*strain + lamb*tre*I 
+=======
+        sigma_linear =  2.*mu*strain + lamb*tre*I
+>>>>>>> upstream/master
         simga_nonlinear = 1.0*mu/J*b + (lamb*(J-Jb)-mu/J)*I
 
         alp = 0.1

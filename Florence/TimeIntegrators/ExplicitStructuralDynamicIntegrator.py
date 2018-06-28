@@ -12,6 +12,7 @@ from time import time
 
 from Florence.FiniteElements.Assembly import Assemble, AssembleExplicit
 from Florence import Mesh
+<<<<<<< HEAD
 
 __all__ = ["ExplicitStructuralDynamicIntegrators"]
 
@@ -73,6 +74,19 @@ class ExplicitStructuralDynamicIntegrators(object):
             self.mech_out = boundary_condition.columns_out
 
             self.applied_dirichlet_mech = boundary_condition.applied_dirichlet
+=======
+from Florence.PostProcessing import PostProcess
+from .StructuralDynamicIntegrator import StructuralDynamicIntegrator
+
+__all__ = ["ExplicitStructuralDynamicIntegrator"]
+
+
+class ExplicitStructuralDynamicIntegrator(StructuralDynamicIntegrator):
+    """Generic explicit structural time integerator based on central difference"""
+
+    def __init__(self):
+        super(ExplicitStructuralDynamicIntegrator, self).__init__()
+>>>>>>> upstream/master
 
 
     def Solver(self, function_spaces, formulation, solver,
@@ -84,7 +98,11 @@ class ExplicitStructuralDynamicIntegrators(object):
             raise NotImplementedError("Explicit solver for {} is not available".format(formulation.fields))
 
         # GET BOUNDARY CONDITIONS INFROMATION
+<<<<<<< HEAD
         self.GetBoundaryInfo(mesh, formulation,boundary_condition)
+=======
+        self.GetBoundaryInfo(mesh, formulation, boundary_condition)
+>>>>>>> upstream/master
 
         # COMPUTE INVERSE OF LUMPED MASS MATRIX
         if formulation.fields == "electro_mechanics":
@@ -146,13 +164,23 @@ class ExplicitStructuralDynamicIntegrators(object):
         U00  = self.UpdateFreeMechanicalDoFs(U00[self.mech_in],formulation.ndim*nnode,formulation.ndim)
 
         TotalDisp[:,:formulation.ndim,0] = U00
+<<<<<<< HEAD
         TotalDisp[:,:formulation.ndim,1] = U0
+=======
+        if TotalDisp.ndim==2:
+            if TotalDisp.shape[2] > 1:
+                TotalDisp[:,:formulation.ndim,1] = U0
+>>>>>>> upstream/master
 
         # SET UP THE ELECTROSTATICS SOLVER PARAMETERS ONCE
         if formulation.fields == "electro_mechanics":
             self.SetupElectrostaticsImplicit(mesh, formulation, boundary_condition, material, fem_solver, solver, Eulerx, 0)
 
+<<<<<<< HEAD
         save_counter = 1
+=======
+        save_counter = 2 if fem_solver.save_frequency == 1 else 1
+>>>>>>> upstream/master
         # TIME LOOP
         for Increment in range(2,LoadIncrement):
 
@@ -176,11 +204,18 @@ class ExplicitStructuralDynamicIntegrators(object):
             Residual = Residual[self.mechanical_dofs]
 
             if fem_solver.mass_type == "lumped":
+<<<<<<< HEAD
                 # Residual   += (2./dt**2)*M*TotalDisp[:,:,Increment-1].ravel() - (1./dt**2)*M*TotalDisp[:,:,Increment-2].ravel()
                 Residual   += (2./dt**2)*M_mech*U0.ravel() - (1./dt**2)*M_mech*U00.ravel()
                 U = dt**2*invM[self.mechanical_dofs]*Residual
                 U = self.UpdateFreeMechanicalDoFs(U[self.mech_in],formulation.ndim*nnode,formulation.ndim)
                 IncDirichlet = self.UpdateFixMechanicalDoFs(AppliedDirichletInc[np.in1d(boundary_condition.columns_out,self.columns_out_mech)],
+=======
+                Residual   += (2./dt**2)*M_mech*U0.ravel() - (1./dt**2)*M_mech*U00.ravel()
+                U = dt**2*invM[self.mechanical_dofs]*Residual
+                U = self.UpdateFreeMechanicalDoFs(U[self.mech_in],formulation.ndim*nnode,formulation.ndim)
+                IncDirichlet = self.UpdateFixMechanicalDoFs(AppliedDirichletInc[self.columns_out_mech_reverse_idx],
+>>>>>>> upstream/master
                     formulation.ndim*nnode,formulation.ndim)
 
             elif fem_solver.mass_type == "consistent":
@@ -190,7 +225,11 @@ class ExplicitStructuralDynamicIntegrators(object):
                 F_b = Residual[:,None][self.mech_in,0]
                 U = solver.Solve(M_b,F_b*dt**2)
                 U = self.UpdateFreeMechanicalDoFs(U,formulation.ndim*nnode,formulation.ndim)
+<<<<<<< HEAD
                 IncDirichlet = self.UpdateFixMechanicalDoFs(AppliedDirichletInc[np.in1d(boundary_condition.columns_out,self.columns_out_mech)],
+=======
+                IncDirichlet = self.UpdateFixMechanicalDoFs(AppliedDirichletInc[self.columns_out_mech_reverse_idx],
+>>>>>>> upstream/master
                     formulation.ndim*nnode,formulation.ndim)
 
             # COMPUTE VELOCITY AND ACCELERATION
@@ -261,6 +300,7 @@ class ExplicitStructuralDynamicIntegrators(object):
                 formulation.external_power.append(power_info[3])
 
 
+<<<<<<< HEAD
             # PRINT LOG IF ASKED FOR
             if fem_solver.print_incremental_log:
                 dmesh = Mesh()
@@ -281,6 +321,10 @@ class ExplicitStructuralDynamicIntegrators(object):
                     savemat(fem_solver.incremental_solution_filename+"_"+str(Increment),{'solution':U},do_compression=True)
                 else:
                     raise ValueError("No file name provided to save incremental solution")
+=======
+            # LOG IF ASKED FOR
+            self.LogSave(fem_solver, formulation, U, Eulerp, Increment)
+>>>>>>> upstream/master
 
             print('\nFinished Load increment', Increment, 'in', time()-t_increment, 'seconds')
 
@@ -308,11 +352,16 @@ class ExplicitStructuralDynamicIntegrators(object):
         """setup implicit electrostatic problem
         """
 
+<<<<<<< HEAD
         from Florence import BoundaryCondition, FEMSolver, IdealDielectric
+=======
+        from Florence import BoundaryCondition, FEMSolver, LaplacianSolver, IdealDielectric, AnisotropicIdealDielectric
+>>>>>>> upstream/master
         from Florence.VariationalPrinciple import LaplacianFormulation, ExplicitPenaltyContactFormulation
 
         # EMULATE ELECTROSTATICS MODEL
         emesh = deepcopy(mesh)
+<<<<<<< HEAD
         # emesh.points = np.copy(Eulerx)
         emesh.points = mesh.points
         # ematerial = IdealDielectric(emesh.InferSpatialDimension(),eps_1=material.eps_2)
@@ -323,13 +372,42 @@ class ExplicitStructuralDynamicIntegrators(object):
         ematerial.H_VoigtSize = formulation.ndim
         ematerial.nvar = 1
         ematerial.fields = "electrostatics"
+=======
+
+        if fem_solver.activate_explicit_multigrid:
+            # WE GET THE MAX EPS - NOT ELEGANT BUT SEEMINGLY WORKS WELL
+            eps_s = []
+            for key, value in list(material.__dict__.items()):
+                if "eps" in key:
+                    eps_s.append(value)
+            max_eps = max(eps_s)
+            ematerial = IdealDielectric(emesh.InferSpatialDimension(),eps_1=max_eps)
+
+            eanalysis_nature = "linear"
+            eoptimise = True
+        else:
+            ematerial = deepcopy(material)
+            ematerial.Hessian = ematerial.Permittivity
+            ematerial.KineticMeasures = ematerial.ElectrostaticMeasures
+            ematerial.H_VoigtSize = formulation.ndim
+            ematerial.nvar = 1
+            ematerial.fields = "electrostatics"
+
+            eanalysis_nature = "nonlinear"
+            eoptimise = False
+>>>>>>> upstream/master
 
         # SET UP BOUNDARY CONDITION DURING SOLUTION
         eboundary_condition = BoundaryCondition()
 
         eformulation = LaplacianFormulation(mesh)
+<<<<<<< HEAD
         efem_solver = FEMSolver(number_of_load_increments=1,analysis_nature="nonlinear",
             newton_raphson_tolerance=fem_solver.newton_raphson_tolerance)
+=======
+        efem_solver = FEMSolver(number_of_load_increments=1,analysis_nature=eanalysis_nature,
+            newton_raphson_tolerance=fem_solver.newton_raphson_tolerance,optimise=eoptimise)
+>>>>>>> upstream/master
 
         self.emesh = emesh
         self.ematerial = ematerial
@@ -342,23 +420,54 @@ class ExplicitStructuralDynamicIntegrators(object):
         """Solve implicit electrostatic problem
         """
 
+<<<<<<< HEAD
+=======
+        LoadIncrement = fem_solver.number_of_load_increments
+>>>>>>> upstream/master
         # IF ALL ELECTRIC DoFs ARE FIXED
         if mesh.points.shape[0] == self.electric_out.shape[0]:
             if self.applied_dirichlet_electric.ndim == 2:
                 return self.applied_dirichlet_electric[:,Increment]
             else:
+<<<<<<< HEAD
                 return self.applied_dirichlet_electric
+=======
+                # RAMP TYPE
+                return self.applied_dirichlet_electric*(1.*Increment/LoadIncrement)
+>>>>>>> upstream/master
 
         # GET BOUNDARY CONDITIONS
         if boundary_condition.dirichlet_flags.ndim==3:
             self.eboundary_condition.dirichlet_flags = boundary_condition.dirichlet_flags[:,-1,Increment]
         else:
+<<<<<<< HEAD
             self.eboundary_condition.dirichlet_flags = boundary_condition.dirichlet_flags[:,-1]
         if boundary_condition.neumann_flags is not None:
             if boundary_condition.dirichlet_flags.ndim==3:
                 self.eboundary_condition.neumann_flags = boundary_condition.neumann_flags[:,-1, Increment]
             else:
                 self.eboundary_condition.neumann_flags = boundary_condition.neumann_flags[:,-1]
+=======
+            # RAMP TYPE
+            self.eboundary_condition.dirichlet_flags = boundary_condition.dirichlet_flags[:,-1]*(1.*Increment/LoadIncrement)
+        if boundary_condition.neumann_flags is not None:
+            if boundary_condition.neumann_data_applied_at == "node":
+                if boundary_condition.neumann_flags.ndim==3:
+                    self.eboundary_condition.neumann_flags = boundary_condition.neumann_flags[:,-1, Increment]
+                else:
+                    # RAMP TYPE
+                    self.eboundary_condition.neumann_flags = boundary_condition.neumann_flags[:,-1]*(1.*Increment/LoadIncrement)
+            if boundary_condition.neumann_data_applied_at == "face":
+                if boundary_condition.neumann_flags.ndim==2:
+                    self.eboundary_condition.neumann_flags = boundary_condition.neumann_flags[:,Increment]
+                    self.eboundary_condition.applied_neumann = boundary_condition.applied_neumann[:,-1, Increment]
+                    self.eboundary_condition.applied_neumann = self.eboundary_condition.applied_neumann[:,None]
+                else:
+                    # RAMP TYPE
+                    self.eboundary_condition.neumann_flags = boundary_condition.neumann_flags[:]
+                    self.eboundary_condition.applied_neumann = boundary_condition.applied_neumann[:,-1]*(1.*Increment/LoadIncrement)
+                    self.eboundary_condition.applied_neumann = self.eboundary_condition.applied_neumann[:,None]
+>>>>>>> upstream/master
 
         # FILTER OUT CASES WHERE BOUNDARY CONDITION IS APPLIED BUT IS ZERO - RELEASE LOAD CYCLE IN DYNAMICS
         if np.allclose(self.eboundary_condition.dirichlet_flags[~np.isnan(self.eboundary_condition.dirichlet_flags)],0.):
@@ -375,6 +484,7 @@ class ExplicitStructuralDynamicIntegrators(object):
 
 
 
+<<<<<<< HEAD
     def UpdateFixMechanicalDoFs(self, AppliedDirichletInc, fsize, nvar):
         """Updates the geometry (DoFs) with incremental Dirichlet boundary conditions
             for fixed/constrained degrees of freedom only. Needs to be applied per time steps"""
@@ -456,4 +566,7 @@ class ExplicitStructuralDynamicIntegrators(object):
 
         total_energy = internal_energy + kinetic_energy - external_energy
         return total_energy, internal_energy, kinetic_energy, external_energy
+=======
+
+>>>>>>> upstream/master
 

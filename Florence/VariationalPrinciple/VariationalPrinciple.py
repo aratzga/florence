@@ -2,11 +2,16 @@ import numpy as np
 from Florence import QuadratureRule, FunctionSpace, Mesh
 from Florence.FiniteElements.LocalAssembly._KinematicMeasures_ import _KinematicMeasures_
 from Florence.VariationalPrinciple._GeometricStiffness_ import GeometricStiffnessIntegrand as GetGeomStiffness
+<<<<<<< HEAD
 from ._MassIntegrand_ import __MassIntegrand__, __ConstantMassIntegrand__
 
 import pyximport
 pyximport.install(setup_args={'include_dirs': np.get_include()})
 from .DisplacementApproachIndices import FillGeometricB
+=======
+from .DisplacementApproachIndices import FillGeometricB
+from ._MassIntegrand_ import __MassIntegrand__, __ConstantMassIntegrand__
+>>>>>>> upstream/master
 
 
 __all__ = ["VariationalPrinciple"]
@@ -175,7 +180,13 @@ class VariationalPrinciple(object):
         for ivar in range(ndim):
             N[ivar::nvar,ivar] = Bases
 
+<<<<<<< HEAD
         rhoNN = rho*np.dot(N,N.T)
+=======
+        rhoNN = rho*np.einsum("ij,kj->ik",N,N)
+        # causes issues when called from detached parallel solver
+        # rhoNN = rho*np.dot(N,N.T)
+>>>>>>> upstream/master
         return rhoNN
 
     def GetConstantMassIntegrand(self, Domain, material):

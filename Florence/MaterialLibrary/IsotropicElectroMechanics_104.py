@@ -3,6 +3,7 @@ from numpy import einsum
 from Florence.Tensor import trace, Voigt
 from .MaterialBase import Material
 from Florence.LegendreTransform import LegendreTransform
+<<<<<<< HEAD
 #####################################################################################################
                         # Electromechanical model in terms of internal energy 
                         # W(C,D) = W_neo(C) + 1/2/eps_1 (D0*D0) + 1/2/eps_2/J (FD0*FD0)
@@ -10,6 +11,14 @@ from Florence.LegendreTransform import LegendreTransform
 
 
 class IsotropicElectroMechanics_104(Material):
+=======
+
+
+class IsotropicElectroMechanics_104(Material):
+    """ Electromechanical model in terms of internal energy 
+            W(C,D) = W_neo(C) + 1/2/eps_1 (D0*D0) + 1/2/eps_2/J (FD0*FD0)
+    """
+>>>>>>> upstream/master
     
     def __init__(self, ndim, **kwargs):
         mtype = type(self).__name__

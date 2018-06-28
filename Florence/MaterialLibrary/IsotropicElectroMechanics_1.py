@@ -11,10 +11,13 @@ class IsotropicElectroMechanics_1(Material):
         mtype = type(self).__name__
         super(IsotropicElectroMechanics_1, self).__init__(mtype, ndim, **kwargs)
 
+<<<<<<< HEAD
         # INITIALISE STRAIN TENSORS
         from Florence.FiniteElements.ElementalMatrices.KinematicMeasures import KinematicMeasures
         StrainTensors = KinematicMeasures(np.asarray([np.eye(self.ndim,self.ndim)]*2),"nonlinear")
         self.Hessian(StrainTensors,np.zeros((self.ndim,1)))
+=======
+>>>>>>> upstream/master
         self.nvar = self.ndim+1
         self.energy_type = "enthalpy"
         self.nature = "nonlinear"
@@ -28,6 +31,10 @@ class IsotropicElectroMechanics_1(Material):
         # LOW LEVEL DISPATCHER
         self.has_low_level_dispatcher = False
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
     def Hessian(self,StrainTensors, ElectricFieldx=0, elem=0, gcounter=0):
 
         mu = self.mu
@@ -42,9 +49,16 @@ class IsotropicElectroMechanics_1(Material):
 
         delta = StrainTensors['I']
         E = 1.0*ElectricFieldx
+<<<<<<< HEAD
         
         Ex = E.reshape(E.shape[0])
         EE = np.dot(E,E.T)
+=======
+
+        Ex = E.reshape(E.shape[0])
+        EE = np.outer(E,E)
+        innerEE = np.dot(E,E.T)
+>>>>>>> upstream/master
 
         I = delta
         # C = lamb2*AijBkl(I,I) +mu2*(AikBjl(I,I)+AilBjk(I,I)) + varepsilon_1*(AijBkl(I,EE) + AijBkl(EE,I) - \
@@ -60,12 +74,21 @@ class IsotropicElectroMechanics_1(Material):
         C = lamb2*einsum("ij,kl",I,I) +mu2*(einsum("ik,jl",I,I)+einsum("il,jk",I,I)) +\
             varepsilon_1*(einsum("ij,kl",I,EE) + einsum("ij,kl",EE,I) - einsum("ik,jl",EE,I)- einsum("il,jk",I,EE) -\
             einsum("il,jl",I,EE)- einsum("ik,jl",I,EE) ) +\
+<<<<<<< HEAD
             varepsilon_1*(np.dot(E.T,E)[0,0])*(0.5*( einsum("ik,jl",I,I)+einsum("il,jk",I,I) )-0.5* einsum("ij,kl",I,I) )
         C_Voigt = Voigt(C,1)
 
 
         # Computing the hessian 
         # Elasticity tensor (C - 4th order tensor) 
+=======
+            varepsilon_1*(innerEE)*(0.5*( einsum("ik,jl",I,I)+einsum("il,jk",I,I) )-0.5* einsum("ij,kl",I,I) )
+        C_Voigt = Voigt(C,1)
+
+
+        # Computing the hessian
+        # Elasticity tensor (C - 4th order tensor)
+>>>>>>> upstream/master
         # C[i,j,k,l] += lamb2*delta[i,j]*delta[k,l]+2.0*mu2*(delta[i,k]*delta[j,l]) #
 
         b = StrainTensors['b'][gcounter]
@@ -77,14 +100,23 @@ class IsotropicElectroMechanics_1(Material):
         # e[k,i,j] += 1.0*varepsilon_1*(E[i]*delta[j,k] + E[j]*delta[i,k] - delta[i,j]*E[k]) ##
 
         # Note that the actual piezoelectric tensor is symmetric wrt to the last two indices
+<<<<<<< HEAD
         # Actual tensor is: e[k,i,j] += 1.0*varepsilon_1*(E[i]*delta[j,k] + E[j]*delta[i,k] - delta[i,j]*E[k]) 
         # We need to make its Voigt_form symmetric with respect to (j,k) instead of (i,j) 
+=======
+        # Actual tensor is: e[k,i,j] += 1.0*varepsilon_1*(E[i]*delta[j,k] + E[j]*delta[i,k] - delta[i,j]*E[k])
+        # We need to make its Voigt_form symmetric with respect to (j,k) instead of (i,j)
+>>>>>>> upstream/master
 
         # ORIGINAL
         # e_voigt = 1.0*varepsilon_1*(AijUk(I,Ex)+AikUj(I,Ex)-UiAjk(Ex,I)).T
 
         e_voigt = 1.0*varepsilon_1*( einsum('ij,k',I,Ex) + einsum('ik,j',I,Ex) - einsum('i,jk',Ex,I) ).T
+<<<<<<< HEAD
         e_voigt = Voigt(e_voigt,1)
+=======
+        e_voigt = Voigt(np.ascontiguousarray(e_voigt),1)
+>>>>>>> upstream/master
 
         # Dielectric Tensor (Permittivity - 2nd order)
         Permittivity = -varepsilon_1*delta ##
@@ -118,17 +150,31 @@ class IsotropicElectroMechanics_1(Material):
 
         be = np.dot(b,ElectricFieldx)
 
+<<<<<<< HEAD
         return 1.0*mu/J*b+(lamb*(J-1.0)-mu)*I + varepsilon_1*(np.dot(E,E.T)-0.5*np.dot(E.T,E)[0,0]*I) ## 
+=======
+        return 1.0*mu/J*b+(lamb*(J-1.0)-mu)*I + varepsilon_1*(np.dot(E,E.T)-0.5*np.dot(E.T,E)*I) ##
+>>>>>>> upstream/master
         # return 1.0*mu/J*b+(lamb*(J-1.0)-mu)*I - (2.0*varepsilon_1/J)*np.dot(be,be.T)
 
 
     def ElectricDisplacementx(self, StrainTensors, ElectricFieldx, elem=0, gcounter=0):
+<<<<<<< HEAD
         
         varepsilon_1 = self.eps_1
         return varepsilon_1*ElectricFieldx ##
+=======
+
+        varepsilon_1 = self.eps_1
+        return varepsilon_1*ElectricFieldx[:,None] ##
+>>>>>>> upstream/master
 
         # J = StrainTensors['J'][gcounter]
         # b = StrainTensors['b'][gcounter]
         # bb =  np.dot(b,b)
         # return (2.0*varepsilon_1/StrainTensors.J)*np.dot(bb,ElectricFieldx).reshape(StrainTensors.b.shape[0],1)
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> upstream/master

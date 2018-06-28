@@ -7,9 +7,15 @@ language: python
 
 python:
   - "2.7"
+<<<<<<< HEAD
   # - "3.5"
   # - "3.6"
   # - "pypy-5.7.1" # PyPy cannot be tested right now because florence uses scipy.io HDF5 readers/writers
+=======
+  - "3.5"
+  - "3.6"
+  # - "pypy-5.7.1"
+>>>>>>> upstream/master
 
 branches:
   only:
@@ -34,12 +40,16 @@ before_install:
   # Install OpenCascade
   - echo -ne '\n' | sudo apt-get install liboce-*
   # PostMesh
+<<<<<<< HEAD
   - cd ~
   - git clone https://github.com/romeric/PostMesh
   - cd PostMesh/PostMeshPy
   - python setup.py build_ext && python setup.py bdist_wheel
   - cd .. && pip install PostMeshPy/dist/*.whl
   - cd .. && rm -rf PostMesh
+=======
+  - pip install PostMeshPy
+>>>>>>> upstream/master
   # Fastor
   - git clone https://github.com/romeric/Fastor
   - sudo mv Fastor /usr/local/include/Fastor/
@@ -48,7 +58,11 @@ before_install:
 
 install:
   # build florence modules
+<<<<<<< HEAD
   - cd $FLORENCEPATH; python setup.py build
+=======
+  - cd $FLORENCEPATH; echo -ne '\n' | python setup.py build
+>>>>>>> upstream/master
 
 script:
   # Run florence test suite

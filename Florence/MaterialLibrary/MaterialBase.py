@@ -10,7 +10,14 @@ class Material(object):
     def __init__(self, mtype, ndim, energy_type="internal_energy",
         lame_parameter_1=None, lame_parameter_2=None, poissons_ratio=None, youngs_modulus=None,
         shear_modulus=None, transverse_iso_youngs_modulus=None, transverse_iso_shear_modulus=None,
+<<<<<<< HEAD
         bulk_modulus=None, density=None, permittivity=None, permeability=None, **kwargs):
+=======
+        bulk_modulus=None, density=None, permittivity=None, permeability=None,
+        is_compressible=True, is_incompressible=False, is_nearly_incompressible=False,
+        is_nonisotropic=True,is_anisotropic=False,is_transversely_isotropic=False, anisotropic_orientations=None,
+        **kwargs):
+>>>>>>> upstream/master
 
 
         # SAFETY CHECKS
@@ -66,6 +73,7 @@ class Material(object):
             # else:
             #     warn("You must set the material constants for problem")
 
+<<<<<<< HEAD
         if self.mtype == 'LinearElastic' or \
             self.mtype == 'IncrementalLinearElastic':
 
@@ -89,10 +97,41 @@ class Material(object):
             I = np.eye(self.ndim,self.ndim)
             self.Iijkl = np.einsum('ij,kl',I,I)
             self.Iikjl = np.einsum('ik,jl',I,I) + np.einsum('il,jk',I,I)
+=======
+        try:
+            if self.mtype == 'LinearElastic' or \
+                self.mtype == 'IncrementalLinearElastic':
+
+                if self.ndim == 2:
+                    self.H_Voigt = self.lamb*np.array([[1.,1.,0.],[1.,1.,0],[0.,0.,0.]]) +\
+                     self.mu*np.array([[2.,0.,0.],[0.,2.,0],[0.,0.,1.]])
+                else:
+                    block_1 = np.zeros((6,6),dtype=np.float64); block_1[:3,:3] = np.ones((3,3))
+                    block_2 = np.eye(6,6); block_2[0,0],block_2[1,1],block_2[2,2]=2.,2.,2.
+                    self.H_Voigt = self.lamb*block_1 + self.mu*block_2
+            else:
+                if self.ndim == 2:
+                    self.vIijIkl = np.array([[1.,1.,0.],[1.,1.,0],[0.,0.,0.]])
+                    self.vIikIjl = np.array([[2.,0.,0.],[0.,2.,0],[0.,0.,1.]])
+                else:
+                    block_1 = np.zeros((6,6),dtype=np.float64); block_1[:3,:3] = np.ones((3,3))
+                    block_2 = np.eye(6,6); block_2[0,0],block_2[1,1],block_2[2,2]=2.,2.,2.
+                    self.vIijIkl = block_1
+                    self.vIikIjl = block_2
+
+                I = np.eye(self.ndim,self.ndim)
+                self.Iijkl = np.einsum('ij,kl',I,I)
+                self.Iikjl = np.einsum('ik,jl',I,I) + np.einsum('il,jk',I,I)
+
+        except TypeError:
+            # CATCH ONLY TypeError. OTHER MATERIAL CONSTANT RELATED ERRORS ARE SELF EXPLANATORY
+            raise ValueError("Material constants for {} does not seem correct".format(self.mtype))
+>>>>>>> upstream/master
 
         if self.H_Voigt is not None:
             self.H_VoigtSize = self.H_Voigt.shape[0]
 
+<<<<<<< HEAD
         self.is_compressible = True
         self.is_incompressible = False
         self.is_nearly_incompressible = False
@@ -101,6 +140,16 @@ class Material(object):
         self.is_transversely_isotropic = False
         self.is_nonisotropic = False
         self.anisotropic_orientations = None
+=======
+        self.is_compressible = is_compressible
+        self.is_nearly_incompressible = is_nearly_incompressible
+        self.is_incompressible = is_incompressible
+
+        self.is_anisotropic = is_anisotropic
+        self.is_transversely_isotropic = is_transversely_isotropic
+        self.is_nonisotropic = is_nonisotropic
+        self.anisotropic_orientations = anisotropic_orientations
+>>>>>>> upstream/master
 
         self.has_low_level_dispatcher = False
 

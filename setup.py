@@ -1,6 +1,12 @@
 from __future__ import print_function
+<<<<<<< HEAD
 import os, platform, sys, subprocess, imp
 from distutils.core import setup
+=======
+from setuptools import setup
+from setuptools import find_packages
+import os, platform, sys, subprocess, imp
+>>>>>>> upstream/master
 from distutils.command.clean import clean
 from distutils.extension import Extension
 from distutils.sysconfig import get_config_var, get_config_vars, get_python_inc, get_python_lib
@@ -14,6 +20,21 @@ try:
 except ImportError:
     raise ImportError("Could not import numpy. Please install numpy first")
 
+<<<<<<< HEAD
+=======
+from multiprocessing import Pool, cpu_count
+
+
+try:
+    from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+    class bdist_wheel(_bdist_wheel):
+        def finalize_options(self):
+            _bdist_wheel.finalize_options(self)
+            self.root_is_pure = False
+except ImportError:
+    bdist_wheel = None
+
+>>>>>>> upstream/master
 
 
 class FlorenceSetup(object):
@@ -51,19 +72,35 @@ class FlorenceSetup(object):
     extension_paths = None
     extension_postfix = None
 
+<<<<<<< HEAD
     kinematics_version = "-DUSE_AVX_VERSION"
 
     def __init__(self, _fc_compiler=None, _cc_compiler=None, _cxx_compiler=None,
         _blas=None, _kinematics_version=None):
 
         # GET THE CURRENT WORKING DIRECTORY
+=======
+    parallel = True
+    num_cpu = cpu_count()
+
+    kinematics_version = "-DUSE_AVX_VERSION"
+
+    def __init__(self, _fc_compiler=None, _cc_compiler=None, _cxx_compiler=None,
+        _blas=None, _kinematics_version=None, _fastor_path=None, _ncpu=1):
+
+        # Get current working working directory
+>>>>>>> upstream/master
         self._pwd_ = os.path.dirname(os.path.realpath('__file__'))
         # Get python version and paths to header
         self.GetPythonPath()
         # Get numpy version and paths to header
         self.GetNumPyPath()
         # Get Fastor path
+<<<<<<< HEAD
         self.GetFastorPath()
+=======
+        self.GetFastorPath(_fastor_path)
+>>>>>>> upstream/master
         # Get BLAS version and paths
         self.GetBLAS(_blas)
         # Get kinematics version
@@ -74,6 +111,11 @@ class FlorenceSetup(object):
         self.SetCompilerArgs()
         # Collect all extension module paths
         self.CollectExtensionModulePaths()
+<<<<<<< HEAD
+=======
+        # Determine parallel builds
+        self.SetParallelism(_ncpu)
+>>>>>>> upstream/master
 
 
     def GetPythonPath(self):
@@ -153,7 +195,16 @@ class FlorenceSetup(object):
         self.numpy_include_path = np.get_include()
 
 
+<<<<<<< HEAD
     def GetFastorPath(self):
+=======
+    def GetFastorPath(self, _fastor_path=None):
+        if _fastor_path is not None:
+            if os.path.isdir(_fastor_path):
+                self.fastor_include_path = _fastor_path
+                return
+
+>>>>>>> upstream/master
         if os.path.isdir("/usr/local/include/Fastor"):
             self.fastor_include_path = "/usr/local/include/Fastor"
         else:
@@ -219,7 +270,11 @@ class FlorenceSetup(object):
 
     def SetCompiler(self, _fc_compiler=None, _cc_compiler=None, _cxx_compiler=None):
 
+<<<<<<< HEAD
         if not "darwin" in self._os and not "linux" in self._os:
+=======
+        if not "darwin" in self._os and not "linux" in self._os and not "cygwin" in self._os:
+>>>>>>> upstream/master
             raise RuntimeError("Florence is not yet tested on any other platform apart from Linux & macOS")
 
         self.fc_compiler = _fc_compiler
@@ -235,6 +290,14 @@ class FlorenceSetup(object):
         if self.cxx_compiler is None:
             self.cxx_compiler = get_config_vars()['CXX'].split(' ')[0]
 
+<<<<<<< HEAD
+=======
+        if self.cc_compiler == "cc" and "linux" in self._os:
+            self.cc_compiler = "gcc"
+        if self.cxx_compiler == "c++" and "linux" in self._os:
+            self.cxx_compiler = "g++"
+
+>>>>>>> upstream/master
         # Sanity check
         if self.cc_compiler is None:
             self.cc_compiler = "gcc"
@@ -258,6 +321,11 @@ class FlorenceSetup(object):
             " BLAS_LD_PATH=" + self.blas_ld_path + " EXT_POSTFIX=" + self.extension_postfix +\
             " CXXSTD=" + self.cxx_version + " KINEMATICS=" + self.kinematics_version
 
+<<<<<<< HEAD
+=======
+        self.compiler_args = self.compiler_args + ' REMOVE="rm -rf" MOVE=mv '
+
+>>>>>>> upstream/master
         self.fc_compiler_args = "FC=" + self.fc_compiler + " " + self.compiler_args
         self.cc_compiler_args = "CC=" + self.cc_compiler + " " + self.compiler_args
         self.cxx_compiler_args = "CXX=" + self.cxx_compiler + " " + self.compiler_args
@@ -266,6 +334,10 @@ class FlorenceSetup(object):
             "CXX=" + self.cxx_compiler + " " + self.compiler_args
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
     def CollectExtensionModulePaths(self):
         # All modules paths should be specified in the following list
         _pwd_ = os.path.join(self._pwd_,"Florence")
@@ -283,9 +355,23 @@ class FlorenceSetup(object):
 
         self.extension_paths = [tensor_path,jacobi_path,bp_path,
             km_path,gm_path,cm_path,tm_path,mm_path,material_path,assemble_path]
+<<<<<<< HEAD
         # self.extension_paths = [material_path]
         # self.extension_paths = [assemble_path]
 
+=======
+        # self.extension_paths = [tensor_path]
+        # self.extension_paths = [assemble_path]
+
+    def SetParallelism(self,_ncpu=1):
+        if _ncpu > 1:
+            self.parallel = True
+            self.num_cpu = int(_ncpu)
+        elif _ncpu == 1:
+            self.parallel = False
+            self.num_cpu = 1
+
+>>>>>>> upstream/master
     def SourceClean(self):
 
         assert self.extension_paths != None
@@ -308,6 +394,7 @@ class FlorenceSetup(object):
         clean_cmd = 'make clean ' + self.compiler_args
         for _path in self.extension_paths:
             if "LLDispatch" not in _path:
+<<<<<<< HEAD
                 execute('cd '+_path+' && echo rm -rf *.so && '+clean_cmd+' && rm -rf *.so *.'+self.extension_postfix)
             elif "LLDispatch" in _path:
                 execute('cd '+_path+
@@ -319,6 +406,22 @@ class FlorenceSetup(object):
         # clean all crude and ext libs if any - this is dangerous if setup.py is from outside the directory
         execute("find . -name \*.so -delete")
         execute("find . -name \*.pyc -delete")
+=======
+                execute('cd '+_path+' && echo rm -rf *.'+self.extension_postfix+' && '+
+                    clean_cmd+' && rm -rf *.'+self.extension_postfix)
+            elif "LLDispatch" in _path:
+                execute('cd '+_path+
+                    ' && echo rm -rf *.'+self.extension_postfix+' CythonSource/*.'+self.extension_postfix
+                    +' && rm -rf *.'+self.extension_postfix+' CythonSource/*.'+
+                    self.extension_postfix)
+            else:
+                execute('cd '+_path+' && echo rm -rf *.'+self.extension_postfix+' && rm -rf *.'+self.extension_postfix)
+
+        # # clean all crude and ext libs if any - this is dangerous if setup.py is ever invoked from outside the directory
+        # # which is certainly never the case
+        # execute("find . -name \*.so -delete")
+        # execute("find . -name \*.pyc -delete")
+>>>>>>> upstream/master
 
 
     def Build(self):
@@ -339,7 +442,12 @@ class FlorenceSetup(object):
                                     "_IsotropicElectroMechanics_107_",
                                     "_IsotropicElectroMechanics_108_",
                                     "_IsotropicElectroMechanics_109_",
+<<<<<<< HEAD
                                     "_Piezoelectric_100_"
+=======
+                                    "_Piezoelectric_100_",
+                                    "_ExplicitIsotropicElectroMechanics_108_",
+>>>>>>> upstream/master
                                 ]
 
         # low_level_material_list = ["_IsotropicElectroMechanics_109_"]
@@ -347,6 +455,7 @@ class FlorenceSetup(object):
         # low_level_material_list = ["_LinearElastic_"]
         # low_level_material_list = ["_ExplicitMooneyRivlin_"]
 
+<<<<<<< HEAD
         assert self.extension_paths != None
 
         for _path in self.extension_paths:
@@ -387,6 +496,127 @@ class FlorenceSetup(object):
                 # Perfect Laplacian assembler
                 execute('cd '+_path+' && make ' + self.compiler_args +\
                     " ASSEMBLY_NAME=_LowLevelAssemblyPerfectLaplacian_ ")
+=======
+
+        assert self.extension_paths != None
+
+        if self.parallel == False:
+            for _path in self.extension_paths:
+                if "LLDispatch" not in _path and "_Assembly_" not in _path:
+                    execute('cd '+_path+' && make ' + self.compiler_args)
+                if "LLDispatch" in _path:
+                    _cmds = []
+                    for material in low_level_material_list:
+                        material = material.lstrip('_').rstrip('_')
+                        execute('cd '+_path+' && make ' + self.compiler_args + " MATERIAL=" + material)
+
+                elif "_Assembly_" in _path:
+
+                    # Sparse and RHS assembler
+                    execute('cd '+_path+' && make cython_assembler_build ' + self.compiler_args)
+
+                    ll_material_mech = low_level_material_list[:6]
+                    ll_material_electro_mech = low_level_material_list[6:]
+
+                    ll_material_mech.remove("_ExplicitMooneyRivlin_")
+                    ll_material_electro_mech.remove("_IsotropicElectroMechanics_109_")
+                    ll_material_electro_mech.remove("_ExplicitIsotropicElectroMechanics_108_")
+
+                    # ll_material_mech = []
+                    # ll_material_electro_mech = low_level_material_list
+                    # ll_material_mech = low_level_material_list
+                    # ll_material_electro_mech = []
+
+                    execute('cd '+_path+' && python AOT_Assembler.py clean')
+                    execute('cd '+_path+' && python AOT_Assembler.py configure')
+
+                    for material in ll_material_mech:
+                        execute('cd '+_path+' && make ' + self.compiler_args + " ASSEMBLY_NAME=_LowLevelAssemblyDF_"  + material)
+                    for material in ll_material_electro_mech:
+                        execute('cd '+_path+' && make ' + self.compiler_args + " ASSEMBLY_NAME=_LowLevelAssemblyDPF_" + material)
+
+                    execute('cd '+_path+' && python AOT_Assembler.py clean')
+
+                    # Explicit assembler
+                    execute('cd '+_path+' && make ' + self.compiler_args +\
+                        " ASSEMBLY_NAME=_LowLevelAssemblyExplicit_DF_DPF_ CONDF_INC=../../../VariationalPrinciple/_Traction_/\
+                        CONDF_INC=../../../VariationalPrinciple/_Traction_/")
+
+                    # Perfect Laplacian assembler
+                    execute('cd '+_path+' && make ' + self.compiler_args +\
+                        " ASSEMBLY_NAME=_LowLevelAssemblyPerfectLaplacian_ ")
+
+        else:
+            # Parallel build
+            pool = Pool(self.num_cpu)
+
+            # All modules apart from LLDispatch and _Assembly_ modules
+            _cmds = []
+            for _path in self.extension_paths:
+                if "LLDispatch" not in _path and "_Assembly_" not in _path:
+                    _cmds.append('cd '+_path+' && make ' + self.compiler_args)
+
+            pool.map(execute,_cmds)
+
+
+            # LLDispatch modules
+            _cmds = []
+            for _path in self.extension_paths:
+                if "LLDispatch" in _path:
+                    for material in low_level_material_list:
+                        material = material.lstrip('_').rstrip('_')
+                        _cmds.append('cd '+_path+' && make ' + self.compiler_args + " MATERIAL=" + material)
+
+            pool.map(execute,_cmds)
+
+
+            # _Assembly_ modules
+            _cmds = []
+            for _path in self.extension_paths:
+                if "_Assembly_" in _path:
+
+                    ll_material_mech = low_level_material_list[:6]
+                    ll_material_electro_mech = low_level_material_list[6:]
+
+                    ll_material_mech.remove("_ExplicitMooneyRivlin_")
+                    ll_material_electro_mech.remove("_IsotropicElectroMechanics_109_")
+                    ll_material_electro_mech.remove("_ExplicitIsotropicElectroMechanics_108_")
+
+                    # ll_material_mech = []
+                    # ll_material_electro_mech = low_level_material_list
+                    # ll_material_mech = low_level_material_list
+                    # ll_material_electro_mech = []
+
+                    execute('cd '+_path+' && python AOT_Assembler.py clean')
+                    execute('cd '+_path+' && python AOT_Assembler.py configure')
+
+                    for material in ll_material_mech:
+                        _cmds.append('cd '+_path+' && make ' + self.compiler_args + " ASSEMBLY_NAME=_LowLevelAssemblyDF_"  + material)
+                    for material in ll_material_electro_mech:
+                        _cmds.append('cd '+_path+' && make ' + self.compiler_args + " ASSEMBLY_NAME=_LowLevelAssemblyDPF_" + material)
+
+            pool.map(execute,_cmds)
+            execute('cd '+_path+' && python AOT_Assembler.py clean')
+
+
+            # Modules built sequentially
+            for _path in self.extension_paths:
+                if "_Assembly_" in _path:
+                    # Sparse and RHS assembler
+                    execute('cd '+_path+' && make cython_assembler_build ' + self.compiler_args)
+
+                    # Explicit assembler
+                    execute('cd '+_path+' && make ' + self.compiler_args +\
+                        " ASSEMBLY_NAME=_LowLevelAssemblyExplicit_DF_DPF_ CONDF_INC=../../../VariationalPrinciple/_Traction_/\
+                        CONDF_INC=../../../VariationalPrinciple/_Traction_/")
+
+                    # Perfect Laplacian assembler
+                    execute('cd '+_path+' && make ' + self.compiler_args +\
+                        " ASSEMBLY_NAME=_LowLevelAssemblyPerfectLaplacian_ ")
+
+            pool.close()
+
+>>>>>>> upstream/master
 
         # Get rid of cython sources
         sys.stdout = open(os.devnull, 'w')
@@ -394,11 +624,14 @@ class FlorenceSetup(object):
         sys.stdout = sys.__stdout__
 
 
+<<<<<<< HEAD
         sys.path.insert(1,self._pwd_)
         from Florence import Mesh, MaterialLibrary, FEMSolver
         from Florence.VariationalPrinciple import VariationalPrinciple
 
 
+=======
+>>>>>>> upstream/master
     def Install(self):
         var = raw_input("This includes florence in your python path. Do you agree (y/n): ")
         if var=="n" or "no" in var:
@@ -407,22 +640,35 @@ class FlorenceSetup(object):
         execute('export PYTHONPATH="' + self._pwd_ + ':$PYTHONPATH" >> ~/.profile && source ~/.profile')
 
 
+<<<<<<< HEAD
 # helper functions
+=======
+
+>>>>>>> upstream/master
 def execute(_cmd):
     _process = subprocess.Popen(_cmd, shell=True)
     _process.wait()
 
 
 
+<<<<<<< HEAD
 
 
 if __name__ == "__main__":
+=======
+def setup_package():
+>>>>>>> upstream/master
 
     _fc_compiler = None
     _cc_compiler = None
     _cxx_compiler = None
     _blas = None
     _kinematics_version = None
+<<<<<<< HEAD
+=======
+    _fastor_path = None
+    _ncpu = cpu_count()
+>>>>>>> upstream/master
 
     args = sys.argv
 
@@ -431,11 +677,16 @@ if __name__ == "__main__":
 
     if len(args) > 1:
         for arg in args:
+<<<<<<< HEAD
             if arg == "source_clean" or arg == "clean" or arg == "build" or arg=="install":
                 if _op is not None:
                     raise RuntimeError("Multiple conflicting arguments passed to setup")
                 _op = arg
 
+=======
+            if arg == "source_clean" or arg == "clean" or arg == "build" or arg=="manual_install" or "dist" in arg:
+                _op = arg
+>>>>>>> upstream/master
             if "FC" in arg:
                 _fc_compiler = arg.split("=")[-1]
             elif "CC" in arg:
@@ -446,16 +697,31 @@ if __name__ == "__main__":
                 _blas = arg.split("=")[-1]
             if "KINEMATICS" in arg:
                 _kinematics_version = arg.split("=")[-1]
+<<<<<<< HEAD
 
 
     setup_instance = FlorenceSetup(_fc_compiler=_fc_compiler,
         _cc_compiler=_cc_compiler, _cxx_compiler=_cxx_compiler, _blas=_blas,
         _kinematics_version=_kinematics_version)
+=======
+            if "FASTORPATH=" in arg:
+                _fastor_path = int(arg.split("=")[-1])
+            if "np=" in arg:
+                _ncpu = int(arg.split("=")[-1])
+
+    setup_instance = FlorenceSetup(_fc_compiler=_fc_compiler,
+        _cc_compiler=_cc_compiler, _cxx_compiler=_cxx_compiler, _blas=_blas,
+        _kinematics_version=_kinematics_version, _fastor_path=_fastor_path,_ncpu=_ncpu)
+
+    if _op is None:
+        _op = ""
+>>>>>>> upstream/master
 
     if _op == "source_clean":
         setup_instance.SourceClean()
     elif _op == "clean":
         setup_instance.Clean()
+<<<<<<< HEAD
     elif _op == "install":
         setup_instance.Install()
     else:
@@ -463,3 +729,47 @@ if __name__ == "__main__":
 
 
 
+=======
+    elif _op == "manual_install":
+        setup_instance.Install()
+    else:
+
+        with open("README.md", "r") as fh:
+            long_description = fh.read()
+
+        metadata =  dict(
+                        name = "Florence",
+                        version = "0.1.4.dev",
+                        description = """A Python based computational framework for integrated computer aided design,
+                            curvilinear mesh generation and finite and boundary element methods for linear and nonlinear
+                            analysis of solids and coupled multiphysics problems""",
+                        long_description_content_type="text/markdown",
+                        long_description=long_description,
+                        author="Roman Poya",
+                        author_email = "roman_poya@yahoo.com",
+                        url = "https://github.com/romeric/florence",
+                        license="MIT",
+                        platforms=["Linux", "macOS", "Unix", "Windows"],
+                        cmdclass={'bdist_wheel': bdist_wheel},
+                        python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
+                        install_requires=[
+                          'cython>=0.23',
+                          'numpy>=1.9',
+                          'scipy>=0.14',
+                          'scikit-umfpack>=0.2'],
+                        packages=find_packages(),
+                        include_package_data=True,
+                        package_data={'': ['*.pyx', '*.pxd', '*.h', '*.hpp', '*.dll', '*.dylib', '*.so',
+                            '*.py', '*.txt', '*.md', 'Makefile']},
+                    )
+
+
+        if "build" in _op or "dist" in _op:
+            metadata['ext_modules'] = setup_instance.Build()
+
+        setup(**metadata)
+
+
+if __name__ == "__main__":
+    setup_package()
+>>>>>>> upstream/master

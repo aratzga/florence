@@ -3,6 +3,7 @@ from numpy import einsum
 from Florence.Tensor import trace, Voigt
 from .MaterialBase import Material
 from Florence.LegendreTransform import LegendreTransform
+<<<<<<< HEAD
 #####################################################################################################
                         # Electromechanical model in terms of internal energy 
                         # W(C,D0) = W_neo(C) + 1/2/eps_1/J (FD0*FD0)
@@ -10,6 +11,14 @@ from Florence.LegendreTransform import LegendreTransform
 
 
 class IsotropicElectroMechanics_102(Material):
+=======
+
+
+class IsotropicElectroMechanics_102(Material):
+    """Electromechanical model in terms of internal energy 
+                        W(C,D0) = W_neo(C) + 1/2/eps_1/J (FD0*FD0)
+    """
+>>>>>>> upstream/master
     
     def __init__(self, ndim, **kwargs):
         mtype = type(self).__name__
@@ -29,6 +38,10 @@ class IsotropicElectroMechanics_102(Material):
         # LOW LEVEL DISPATCHER
         self.has_low_level_dispatcher = False
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
     def Hessian(self,StrainTensors,ElectricDisplacementx,elem=0,gcounter=0):
 
         mu = self.mu
@@ -67,7 +80,10 @@ class IsotropicElectroMechanics_102(Material):
         return H_Voigt
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
     def CauchyStress(self,StrainTensors,ElectricDisplacementx,elem=0,gcounter=0):
 
         mu = self.mu
@@ -82,6 +98,10 @@ class IsotropicElectroMechanics_102(Material):
 
         return 1.0*mu/J*(b - I) + lamb*(J-1)*I + 1/eps_1*(np.dot(D,D.T) - 0.5*DD*I)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
     def ElectricDisplacementx(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
         D = self.legendre_transform.GetElectricDisplacement(self, StrainTensors, ElectricFieldx, elem, gcounter)
 

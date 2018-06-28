@@ -4,15 +4,22 @@ from Florence import QuadratureRule, FunctionSpace
 
 from Florence.FiniteElements.LocalAssembly.KinematicMeasures import *
 from Florence.FiniteElements.LocalAssembly._KinematicMeasures_ import _KinematicMeasures_
+<<<<<<< HEAD
+=======
+from .DisplacementPotentialApproachIndices import *
+>>>>>>> upstream/master
 from ._ConstitutiveStiffnessDPF_ import __ConstitutiveStiffnessIntegrandDPF__
 from ._TractionDPF_ import __TractionIntegrandDPF__
 from Florence.Tensor import issymetric
 from Florence.LegendreTransform import LegendreTransform
 
+<<<<<<< HEAD
 import pyximport
 pyximport.install(setup_args={'include_dirs': np.get_include()})
 from .DisplacementPotentialApproachIndices import *
 
+=======
+>>>>>>> upstream/master
 
 __all__ = ["DisplacementPotentialFormulation"]
 
@@ -129,10 +136,13 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
                 massel = self.GetLocalMass(function_space,material,LagrangeElemCoords,EulerElemCoords,fem_solver,elem)
 
 
+<<<<<<< HEAD
         if fem_solver.has_moving_boundary:
             # COMPUTE FORCE VECTOR
             f = ApplyNeumannBoundaryConditions3D(MainData, mesh, elem, LagrangeElemCoords)
 
+=======
+>>>>>>> upstream/master
         I_stiff_elem, J_stiff_elem, V_stiff_elem = self.FindIndices(stiffnessel)
         if fem_solver.analysis_type != 'static' and fem_solver.is_mass_computed is False:
             I_mass_elem, J_mass_elem, V_mass_elem = self.FindIndices(massel)
@@ -169,10 +179,13 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
                 massel = self.GetLumpedMass(massel)
 
 
+<<<<<<< HEAD
         if fem_solver.has_moving_boundary:
             # COMPUTE FORCE VECTOR
             f = self.ApplyNeumannBoundaryConditions3D(fem_solver, mesh, elem, LagrangeElemCoords, ElectricPotentialElem)
 
+=======
+>>>>>>> upstream/master
         return t, f, massel
 
 
@@ -255,6 +268,7 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
 
             # COMPUTE THE TANGENT STIFFNESS MATRIX
             BDB_1, t = self.ConstitutiveStiffnessIntegrand(B, SpatialGradient[counter,:,:],
+<<<<<<< HEAD
                 ElectricDisplacementx, CauchyStressTensor, H_Voigt, analysis_nature=fem_solver.analysis_nature,
                 has_prestress=fem_solver.has_prestress)
 
@@ -262,6 +276,15 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
             if fem_solver.requires_geometry_update:
                 BDB_1 += self.GeometricStiffnessIntegrand(SpatialGradient[counter,:,:],CauchyStressTensor)
                 # INTEGRATE TRACTION FORCE
+=======
+                ElectricDisplacementx, CauchyStressTensor, H_Voigt, requires_geometry_update=fem_solver.requires_geometry_update)
+
+            # COMPUTE GEOMETRIC STIFFNESS MATRIX
+            if material.nature != "linear":
+                BDB_1 += self.GeometricStiffnessIntegrand(SpatialGradient[counter,:,:],CauchyStressTensor)
+            # INTEGRATE TRACTION FORCE
+            if fem_solver.requires_geometry_update:
+>>>>>>> upstream/master
                 tractionforce += t*detJ[counter]
 
             # INTEGRATE STIFFNESS
@@ -287,14 +310,22 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
         stiffness, tractionforce = __ConstitutiveStiffnessIntegrandDPF__(SpatialGradient,ElectricDisplacementx,
             CauchyStressTensor,H_Voigt,detJ,self.nvar,fem_solver.requires_geometry_update)
         # COMPUTE LOCAL GEOMETRIC STIFFNESS
+<<<<<<< HEAD
         if fem_solver.requires_geometry_update:
+=======
+        if material.nature != "linear":
+>>>>>>> upstream/master
             stiffness += self.__GeometricStiffnessIntegrand__(SpatialGradient,CauchyStressTensor,detJ)
 
         return stiffness, tractionforce
 
 
     def ConstitutiveStiffnessIntegrand(self, B, SpatialGradient, ElectricDisplacementx,
+<<<<<<< HEAD
         CauchyStressTensor, H_Voigt, analysis_nature="nonlinear", has_prestress=True):
+=======
+        CauchyStressTensor, H_Voigt, requires_geometry_update=True):
+>>>>>>> upstream/master
         """Overrides base for electric potential formulation"""
 
         # MATRIX FORM
@@ -304,8 +335,13 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
         FillConstitutiveB(B,SpatialGradient,self.ndim,self.nvar)
         BDB = B.dot(H_Voigt.dot(B.T))
 
+<<<<<<< HEAD
         t=[]
         if analysis_nature == 'nonlinear' or has_prestress:
+=======
+        t=np.zeros((B.shape[0],1))
+        if requires_geometry_update:
+>>>>>>> upstream/master
             TotalTraction = GetTotalTraction(CauchyStressTensor,ElectricDisplacementx)
             t = np.dot(B,TotalTraction)
 
@@ -389,8 +425,12 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
 
             # COMPUTE THE TANGENT STIFFNESS MATRIX
             t = self.TractionIntegrand(B, SpatialGradient[counter,:,:],
+<<<<<<< HEAD
                 ElectricDisplacementx, CauchyStressTensor, analysis_nature=fem_solver.analysis_nature,
                 has_prestress=fem_solver.has_prestress)
+=======
+                ElectricDisplacementx, CauchyStressTensor, requires_geometry_update=fem_solver.requires_geometry_update)
+>>>>>>> upstream/master
 
             if fem_solver.requires_geometry_update:
                 # INTEGRATE TRACTION FORCE
@@ -419,7 +459,11 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
 
 
     def TractionIntegrand(self, B, SpatialGradient, ElectricDisplacementx,
+<<<<<<< HEAD
         CauchyStressTensor, analysis_nature="nonlinear", has_prestress=True):
+=======
+        CauchyStressTensor, requires_geometry_update=True):
+>>>>>>> upstream/master
         """Applies to displacement potential based formulation"""
 
         # MATRIX FORM
@@ -428,8 +472,13 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
 
         FillConstitutiveB(B,SpatialGradient,self.ndim,self.nvar)
 
+<<<<<<< HEAD
         t=[]
         if analysis_nature == 'nonlinear' or has_prestress:
+=======
+        t=np.zeros((B.shape[0],1))
+        if requires_geometry_update:
+>>>>>>> upstream/master
             TotalTraction = GetTotalTraction(CauchyStressTensor,ElectricDisplacementx)
             t = np.dot(B,TotalTraction)
 
@@ -564,7 +613,11 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
     # ##############################################################################################
 
     # def ConstitutiveStiffnessIntegrand(self, B, SpatialGradient, ElectricDisplacementx,
+<<<<<<< HEAD
     #     CauchyStressTensor, H_Voigt, analysis_nature="nonlinear", has_prestress=True):
+=======
+    #     CauchyStressTensor, H_Voigt, requires_geometry_update=True):
+>>>>>>> upstream/master
 
     #     ndim = self.ndim
     #     nvar = self.nvar
@@ -594,7 +647,11 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
     #         B[3::nvar,7] = SpatialGradient[1,:]
     #         B[3::nvar,8] = SpatialGradient[2,:]
 
+<<<<<<< HEAD
     #         if analysis_nature == 'nonlinear' or has_prestress:
+=======
+    #         if requires_geometry_update:
+>>>>>>> upstream/master
     #             CauchyStressTensor_Voigt = np.array([
     #                 CauchyStressTensor[0,0],CauchyStressTensor[1,1],CauchyStressTensor[2,2],
     #                 CauchyStressTensor[0,1],CauchyStressTensor[0,2],CauchyStressTensor[1,2]
@@ -615,7 +672,11 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
     #         B[2::nvar,3] = SpatialGradient[0,:]
     #         B[2::nvar,4] = SpatialGradient[1,:]
 
+<<<<<<< HEAD
     #         if analysis_nature == 'nonlinear' or has_prestress:
+=======
+    #         if requires_geometry_update:
+>>>>>>> upstream/master
     #             CauchyStressTensor_Voigt = np.array([
     #                 CauchyStressTensor[0,0],CauchyStressTensor[1,1],
     #                 CauchyStressTensor[0,1]]).reshape(3,1)
@@ -624,7 +685,11 @@ class DisplacementPotentialFormulation(VariationalPrinciple):
 
     #     BDB = np.dot(np.dot(B,H_Voigt),B.T)
     #     t=[]
+<<<<<<< HEAD
     #     if analysis_nature == 'nonlinear' or has_prestress:
+=======
+    #     if requires_geometry_update:
+>>>>>>> upstream/master
     #         t = np.dot(B,TotalTraction)
 
     #     return BDB, t

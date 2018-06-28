@@ -174,7 +174,10 @@ class CoupleStressSolver(FEMSolver):
         contact_formulation=None):
         """Main solution routine for FEMSolver """
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
         # CHECK DATA CONSISTENCY
         mesh = formulation.meshes[0]
         #---------------------------------------------------------------------------#
@@ -183,6 +186,7 @@ class CoupleStressSolver(FEMSolver):
         #---------------------------------------------------------------------------#
         caller = inspect.getouterframes(inspect.currentframe(), 2)[1][3]
         if caller != "Solve":
+<<<<<<< HEAD
             print('Pre-processing the information. Getting paths, solution parameters, mesh info, interpolation info etc...')
             print('Number of nodes is',mesh.points.shape[0], 'number of DoFs is', mesh.points.shape[0]*formulation.nvar)
             if formulation.ndim==2:
@@ -191,6 +195,9 @@ class CoupleStressSolver(FEMSolver):
             elif formulation.ndim==3:
                 print('Number of elements is', mesh.elements.shape[0], \
                      'and number of boundary nodes is', np.unique(mesh.faces).shape[0])
+=======
+            self.PrintPreAnalysisInfo(mesh, formulation)
+>>>>>>> upstream/master
         #---------------------------------------------------------------------------#
 
         # INITIATE DATA FOR NON-LINEAR ANALYSIS
@@ -244,7 +251,11 @@ class CoupleStressSolver(FEMSolver):
         print('Finished all pre-processing stage. Time elapsed was', time()-tAssembly, 'seconds')
 
         if self.analysis_type != 'static':
+<<<<<<< HEAD
 
+=======
+            boundary_condition.ConvertStaticsToDynamics(mesh, self.number_of_load_increments)
+>>>>>>> upstream/master
             TotalDisp, TotalW, TotalS = self.DynamicSolver(formulation, solver,
                 K, M, NeumannForces, NodalForces, Residual,
                 mesh, TotalDisp, TotalW, TotalS, Eulerx, Eulerw, Eulers, Eulerp, material, boundary_condition)
@@ -359,7 +370,10 @@ class CoupleStressSolver(FEMSolver):
         # INITIALISE VELOCITY AND ACCELERATION
         velocities     = np.zeros((mesh.points.shape[0]*formulation.ndim))
         accelerations  = np.zeros((mesh.points.shape[0]*formulation.ndim))
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
         # COMPUTE DAMPING MATRIX BASED ON MASS
         D = 0.0
         if self.include_physical_damping:
@@ -427,6 +441,10 @@ class CoupleStressSolver(FEMSolver):
                         (1./self.beta/LoadFactor)*M_mech.dot(velocities) + (0.5/self.beta - 1.)*M_mech.dot(accelerations)
             Residual += DeltaF
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
             # CHECK CONTACT AND ASSEMBLE IF DETECTED
             if self.has_contact:
                 Eulerx = mesh.points + TotalDisp[:,:formulation.ndim,Increment-1]
@@ -458,7 +476,11 @@ class CoupleStressSolver(FEMSolver):
             accelerations_old = np.copy(accelerations)
             accelerations = (1./self.beta/LoadFactor**2)*(TotalDisp[:,:formulation.ndim,Increment] -\
                 TotalDisp[:,:formulation.ndim,Increment-1]).ravel() -\
+<<<<<<< HEAD
                 1./self.beta/LoadFactor*velocities + (1.-0.5/self.beta)*accelerations
+=======
+                1./self.beta/LoadFactor*velocities + (1.-0.5/self.beta)*accelerations_old
+>>>>>>> upstream/master
             velocities += LoadFactor*(self.gamma*accelerations + (1-self.gamma)*accelerations_old)
 
             # UPDATE
@@ -480,6 +502,20 @@ class CoupleStressSolver(FEMSolver):
                         self.number_of_load_increments = Increment
                     break
 
+<<<<<<< HEAD
+=======
+            # STORE THE INFORMATION IF THE SOLVER BLOWS UP
+            if Increment > 0:
+                U0 = TotalDisp[:,:,Increment-1].ravel()
+                U = TotalDisp[:,:,Increment].ravel()
+                tol = 1e200 if Increment < 5 else 10.
+                if np.isnan(norm(U)) or np.abs(U.max()/(U0.max()+1e-14)) > tol:
+                    print("Solver blew up! Norm of incremental solution is too large")
+                    TotalDisp = TotalDisp[:,:,:Increment]
+                    self.number_of_load_increments = Increment
+                    break
+
+>>>>>>> upstream/master
             print('Finished Load increment', Increment, 'in', time()-t_increment, 'seconds\n')
 
         # COMPUTE DISSIPATION OF ENERGY THROUGH TIME

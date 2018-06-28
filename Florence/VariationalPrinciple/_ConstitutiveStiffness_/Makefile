@@ -1,12 +1,28 @@
 PYTHON_VERSION = python2.7
 PYTHON_INCLUDE_PATH = /usr/include/python2.7/
 PYTHON_LD_PATH = /usr/lib/
+<<<<<<< HEAD
 EXT_POSTFIX= so
 CYTHONFLAGS = -DNPY_NO_DEPRECATED_API
 
 CYTHON = cython --cplus
 REMOVE = rm -rf
 MOVE = mv
+=======
+EXT_POSTFIX = so
+CYTHONFLAGS = -DNPY_NO_DEPRECATED_API
+
+CYTHON = cython --cplus
+
+ifeq ($(OS),Windows_NT)
+REMOVE = del
+MOVE = move
+else
+REMOVE = rm -rf
+MOVE = mv
+endif
+ENTER = cd
+>>>>>>> upstream/master
 
 INLINE_THRESHOLD = 100000
 CXXSTD=-std=c++11
@@ -21,7 +37,10 @@ ifeq ($(findstring mkl,$(BLAS_VERSION)),mkl)
 CXXFLAGS += -DHAS_MKL
 endif
 
+<<<<<<< HEAD
 # NUMPY_INCLUDE_PATH=python -c "import numpy; print numpy.get_include()"
+=======
+>>>>>>> upstream/master
 NUMPY_INCLUDE_PATH = /usr/local/lib/python2.7/dist-packages/numpy/core/include
 
 ifeq ($(findstring g++,$(CXX)),g++)
@@ -37,15 +56,41 @@ ifeq ($(findstring icpc,$(CXX)),icpc)
 CXXFLAGS += -march=native -no-ansi-alias -xHost -fp-model fast=1 -inline-forceinline -inline-factor=$(INLINE_THRESHOLD)
 endif
 
+<<<<<<< HEAD
 all: build_module
 
 build_module:
 	@echo "Building low level constitutive stiffness dispatcher modules"
+=======
+ifeq ($(OS),Windows_NT)
+CXXFLAGS += -D_hypot=hypot -m64 -Wno-format-extra-args -Wno-format
+endif
+
+all: build_module
+
+build_module:
+	@echo "Building low level mechanical constitutive stiffness integrands"
+	$(CYTHON) DisplacementApproachIndices.pyx
+	$(CXX) $(CXXSTD) $(CXXFLAGS) DisplacementApproachIndices.cpp -o DisplacementApproachIndices.$(EXT_POSTFIX) -I. -I$(PYTHON_INCLUDE_PATH) \
+	     -I$(NUMPY_INCLUDE_PATH) -I$(BLAS_INCLUDE_PATH) -L$(PYTHON_LD_PATH) -l$(PYTHON_VERSION) -L$(BLAS_LD_PATH) -l$(BLAS_VERSION)
+	@$(MOVE) DisplacementApproachIndices.$(EXT_POSTFIX) ../
+
+	@echo "Building low level mechanical constitutive stiffness dispatcher modules"
+>>>>>>> upstream/master
 	$(CYTHON) _ConstitutiveStiffnessDF_.pyx
 	$(CXX) $(CXXSTD) $(CXXFLAGS) _ConstitutiveStiffnessDF_.cpp -o _ConstitutiveStiffnessDF_.$(EXT_POSTFIX) -I. -I$(PYTHON_INCLUDE_PATH) \
 	     -I$(NUMPY_INCLUDE_PATH) -I$(BLAS_INCLUDE_PATH) -L$(PYTHON_LD_PATH) -l$(PYTHON_VERSION) -L$(BLAS_LD_PATH) -l$(BLAS_VERSION)
 	@$(MOVE) _ConstitutiveStiffnessDF_.$(EXT_POSTFIX) ../
 
+<<<<<<< HEAD
+=======
+	@echo "Building low level electromechanical constitutive stiffness integrands"
+	$(CYTHON) DisplacementPotentialApproachIndices.pyx
+	$(CXX) $(CXXSTD) $(CXXFLAGS) DisplacementPotentialApproachIndices.cpp -o DisplacementPotentialApproachIndices.$(EXT_POSTFIX) -I. -I$(PYTHON_INCLUDE_PATH) \
+	     -I$(NUMPY_INCLUDE_PATH) -I$(BLAS_INCLUDE_PATH) -L$(PYTHON_LD_PATH) -l$(PYTHON_VERSION) -L$(BLAS_LD_PATH) -l$(BLAS_VERSION)
+	@$(MOVE) DisplacementPotentialApproachIndices.$(EXT_POSTFIX) ../
+
+>>>>>>> upstream/master
 	@echo "Building low level electromechanical constitutive stiffness dispatcher module"
 	$(CYTHON) _ConstitutiveStiffnessDPF_.pyx
 	$(CXX) $(CXXSTD) $(CXXFLAGS) _ConstitutiveStiffnessDPF_.cpp -o _ConstitutiveStiffnessDPF_.$(EXT_POSTFIX) -I. -I$(PYTHON_INCLUDE_PATH) \
@@ -59,9 +104,19 @@ build_module:
 	@$(MOVE) _ConstitutiveStiffnessLaplacian_.$(EXT_POSTFIX) ../
 
 clean:
+<<<<<<< HEAD
 	$(REMOVE) _ConstitutiveStiffnessDF_.cpp _ConstitutiveStiffnessDF_.$(EXT_POSTFIX) ../_ConstitutiveStiffnessDF_.$(EXT_POSTFIX)
+=======
+	$(REMOVE) DisplacementApproachIndices.cpp DisplacementApproachIndices.$(EXT_POSTFIX) ../DisplacementApproachIndices.$(EXT_POSTFIX)
+	$(REMOVE) _ConstitutiveStiffnessDF_.cpp _ConstitutiveStiffnessDF_.$(EXT_POSTFIX) ../_ConstitutiveStiffnessDF_.$(EXT_POSTFIX)
+	$(REMOVE) DisplacementPotentialApproachIndices.cpp DisplacementPotentialApproachIndices.$(EXT_POSTFIX) ../DisplacementPotentialApproachIndices.$(EXT_POSTFIX)
+>>>>>>> upstream/master
 	$(REMOVE) _ConstitutiveStiffnessDPF_.cpp _ConstitutiveStiffnessDPF_.$(EXT_POSTFIX) ../_ConstitutiveStiffnessDPF_.$(EXT_POSTFIX)
 	$(REMOVE)  _ConstitutiveStiffnessLaplacian_.cpp _ConstitutiveStiffnessLaplacian_.$(EXT_POSTFIX) ../_ConstitutiveStiffnessLaplacian_.$(EXT_POSTFIX)
 
 source_clean:
+<<<<<<< HEAD
+=======
+	$(REMOVE) DisplacementApproachIndices.cpp DisplacementPotentialApproachIndices.cpp
+>>>>>>> upstream/master
 	$(REMOVE) _ConstitutiveStiffnessDF_.cpp _ConstitutiveStiffnessDPF_.cpp _ConstitutiveStiffnessLaplacian_.cpp

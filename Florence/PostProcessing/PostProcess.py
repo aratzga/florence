@@ -67,6 +67,12 @@ class PostProcess(object):
         """Set initial (undeformed) mesh"""
         self.mesh = mesh
 
+<<<<<<< HEAD
+=======
+    def SetSolutionVectors(self,sol):
+        self.sol = sol
+
+>>>>>>> upstream/master
     def SetSolution(self,sol):
         self.sol = sol
 
@@ -86,11 +92,24 @@ class PostProcess(object):
     def SetAnisotropicOrientations(self,Directions):
         self.directions = Directions
 
+<<<<<<< HEAD
+=======
+    def GetSolutionVectors(self):
+        if self.sol is None:
+            warn("Solution is not yet computed")
+        return self.sol
+
+    def GetSolution(self):
+        # FOR COMAPTABILITY WITH SetSolution
+        return self.GetSolutionVectors()
+
+>>>>>>> upstream/master
 
     def TotalComponentSol(self, sol, ColumnsIn, ColumnsOut, AppliedDirichletInc, Iter, fsize):
 
         nvar = self.nvar
         ndim = self.ndim
+<<<<<<< HEAD
         TotalSol = np.zeros((fsize,1))
 
         # GET TOTAL SOLUTION
@@ -106,6 +125,13 @@ class PostProcess(object):
         elif self.analysis_nature == 'linear':
             TotalSol[ColumnsIn,0] = sol
             TotalSol[ColumnsOut,0] = AppliedDirichletInc
+=======
+
+        # GET TOTAL SOLUTION
+        TotalSol = np.zeros((fsize,1))
+        TotalSol[ColumnsIn,0] = sol
+        TotalSol[ColumnsOut,0] = AppliedDirichletInc
+>>>>>>> upstream/master
 
         # RE-ORDER SOLUTION COMPONENTS
         dU = TotalSol.reshape(int(TotalSol.shape[0]/nvar),nvar)
@@ -200,9 +226,21 @@ class PostProcess(object):
 
 
         for incr, Increment in enumerate(increments):
+<<<<<<< HEAD
             Eulerx = points + TotalDisp[:,:ndim,Increment]
             if self.formulation.fields == 'electro_mechanics':
                 Eulerp = TotalDisp[:,ndim,Increment]
+=======
+            if TotalDisp.ndim == 3:
+                Eulerx = points + TotalDisp[:,:ndim,Increment]
+            else:
+                Eulerx = points + TotalDisp[:,:ndim]
+            if self.formulation.fields == 'electro_mechanics':
+                if TotalDisp.ndim == 3:
+                    Eulerp = TotalDisp[:,ndim,Increment]
+                else:
+                    Eulerp = TotalDisp[:,ndim]
+>>>>>>> upstream/master
 
             # LOOP OVER ELEMENTS
             for elem in range(nelem):
@@ -435,7 +473,14 @@ class PostProcess(object):
         ndim = self.formulation.ndim
         fields = self.formulation.fields
         nnode = self.mesh.points.shape[0]
+<<<<<<< HEAD
         increments = self.sol.shape[2]
+=======
+        if self.sol.ndim == 3:
+            increments = self.sol.shape[2]
+        else:
+            increments = 1
+>>>>>>> upstream/master
         if steps != None:
             increments = len(steps)
         else:
@@ -591,7 +636,11 @@ class PostProcess(object):
         return namer
 
 
+<<<<<<< HEAD
     def ConstructDifferentOrderSolution(self, mesh=None, sol=None, p=2, equally_spaced=False):
+=======
+    def ConstructDifferentOrderSolution(self, mesh=None, sol=None, p=2, equally_spaced=False, filename=None):
+>>>>>>> upstream/master
         """Build a solution for a different polynomial degree
             This is an immutable function and does not modify self
             input:
@@ -599,6 +648,10 @@ class PostProcess(object):
                 sol:                [Mesh] actual solution
                 p:                  [int] desired polynomial degree to construct the solution for
                 equally_spaced:     [bool] Construct other order solution wit equally spaced or Gauss Lobatto/Fekete points
+<<<<<<< HEAD
+=======
+                filename            [str] name of the file where the solution has to be stored in case it is to big to fit in memory
+>>>>>>> upstream/master
 
             output:
                 ho_mesh:            [Mesh] Mesh of desired degree on which the desired solution is built
@@ -682,7 +735,11 @@ class PostProcess(object):
                 hpBases = Tri.hpNodal.hpBases
                 Neval = np.zeros((nsize,eps.shape[0]),dtype=np.float64)
                 for i in range(eps.shape[0]):
+<<<<<<< HEAD
                     Neval[:,i]  = hpBases(actual_p-1,eps[i,0],eps[i,1],1)[0]
+=======
+                    Neval[:,i]  = hpBases(actual_p-1,eps[i,0],eps[i,1],Transform=1,EvalOpt=1,equally_spaced=True)[0]
+>>>>>>> upstream/master
             else:
                 eps =  EquallySpacedPointsTri(C)
                 # COMPUTE BASES FUNCTIONS AT ALL NODAL POINTS
@@ -722,7 +779,11 @@ class PostProcess(object):
 
         try:
             import psutil
+<<<<<<< HEAD
         except IOError:
+=======
+        except ImportError:
+>>>>>>> upstream/master
             has_psutil = False
             raise ImportError("No module named psutil. Please install it using 'pip install psutil'")
         # GET MEMORY INFO
@@ -733,14 +794,24 @@ class PostProcess(object):
         elif memory.available//1024**3 > 4*sol_size:
             ho_sol = np.zeros((ho_mesh.nnode,sol.shape[1],sol.shape[2]),dtype=np.float32)
         elif memory.available//1024**3 < 4*sol_size:
+<<<<<<< HEAD
             warn("Not enough memory to store the solution. Going to activate out of core procedure. As a remedy limiting the solution specific quantity/ies")
+=======
+            warn("Not enough memory to store the solution. Going to activate out of core procedure."
+                " As a remedy limit the solution to specific quantity/ies")
+>>>>>>> upstream/master
             try:
                 import h5py
             except ImportError:
                 has_h5py = False
                 raise ImportError('h5py is not installed. Please install it first by running "pip install h5py"')
 
+<<<<<<< HEAD
             filename = os.path.join(os.path.expanduser('~'),"output.hdf5")
+=======
+            if filename == None:
+                filename = os.path.join(os.path.expanduser('~'),"output.hdf5")
+>>>>>>> upstream/master
 
             hdf_file = h5py.File(filename,'w')
             ho_sol = hdf_file.create_dataset("Solution",(ho_mesh.nnode,sol.shape[1],sol.shape[2]),dtype=np.float32)
@@ -775,7 +846,11 @@ class PostProcess(object):
 
 
     def MeshQualityMeasures(self, mesh, TotalDisp, plot=False, show_plot=False):
+<<<<<<< HEAD
         """Computes mesh quality measures, Q_1, Q_2, Q_3
+=======
+        """Computes mesh quality measures, Q_1, Q_2, Q_3 [edge distortion, face distortion, Jacobian]
+>>>>>>> upstream/master
 
             input:
                 mesh:                   [Mesh] an instance of class mesh can be any mesh type
@@ -788,7 +863,11 @@ class PostProcess(object):
             self.is_material_anisotropic = False
 
         if self.is_scaledjacobian_computed is True:
+<<<<<<< HEAD
             raise AssertionError('Scaled Jacobian seems to be already computed. Re-Computing it may return incorrect results')
+=======
+            raise AssertionError('Scaled Jacobian seems to have been already computed. Re-computing it may return incorrect results')
+>>>>>>> upstream/master
 
         PostDomain = self.postdomain_bases
         if self.postdomain_bases is None:
@@ -841,9 +920,15 @@ class PostProcess(object):
             # THIS GIVES A RESULT MUCH CLOSER TO ONE
             Jacobian = detF
             # USING INVARIANT F:F
+<<<<<<< HEAD
             Q1 = np.sqrt(np.einsum('kij,lij->kl',F,F)).diagonal()
             # USING INVARIANT H:H
             Q2 = np.sqrt(np.einsum('ijk,ijl->kl',H,H)).diagonal()
+=======
+            Q1 = np.sqrt(np.abs(np.einsum('kij,lij->kl',F,F))).diagonal()
+            # USING INVARIANT H:H
+            Q2 = np.sqrt(np.abs(np.einsum('ijk,ijl->kl',H,H))).diagonal()
+>>>>>>> upstream/master
 
             if self.is_material_anisotropic:
                 Q4 = np.einsum('ijk,k',F,self.directions[elem,:])
@@ -1241,6 +1326,7 @@ class PostProcess(object):
 
 
 
+<<<<<<< HEAD
     def PlotNewtonRaphsonConvergence(self, increment=None, save=False, filename=None):
         """Plots convergence of Newton-Raphson for a given increment"""
 
@@ -1250,20 +1336,46 @@ class PostProcess(object):
         import matplotlib.pyplot as plt
         # NEWTON-RAPHSON CONVERGENCE PLOT
         plt.plot(np.log10(self.newton_raphson_convergence['Increment_'+str(increment)]),'-ko')
+=======
+    def PlotNewtonRaphsonConvergence(self, increment=None, figure=None, show_plot=True, save=False, filename=None):
+        """Plots convergence of Newton-Raphson for a given increment"""
+
+        if self.fem_solver is None:
+            raise ValueError("FEM solver not set for post-processing")
+
+        if increment == None:
+            increment = len(self.fem_solver.NRConvergence)-1
+
+        import matplotlib.pyplot as plt
+        if figure is None:
+            figure = plt.figure()
+
+        plt.plot(np.log10(self.fem_solver.NRConvergence['Increment_'+str(increment)]),'-ko')
+>>>>>>> upstream/master
         axis_font = {'size':'18'}
         plt.xlabel(r'$No\;\; of\;\; Iterations$', **axis_font)
         plt.ylabel(r'$log_{10}|Residual|$', **axis_font)
         plt.grid('on')
 
+<<<<<<< HEAD
         # SAVE
+=======
+>>>>>>> upstream/master
         if save:
             if filename is None:
                 warn("No filename provided. I am going to write one in the current directory")
                 filename = PWD(__file__) + '/output.eps'
+<<<<<<< HEAD
 
             plt.savefig(filename, format='eps', dpi=500)
 
         plt.show()
+=======
+            plt.savefig(filename, format='eps', dpi=500)
+
+        if show_plot:
+            plt.show()
+>>>>>>> upstream/master
 
 
 
@@ -1683,9 +1795,12 @@ class PostProcess(object):
                     ax.set_xlim([x_min - pp*np.abs(x_min), x_max + pp*np.abs(x_max)])
                     ax.set_ylim([y_min - pp*np.abs(y_min), y_max + pp*np.abs(y_max)])
 
+<<<<<<< HEAD
                     # ax.set_xlim([-1, 7.5])
                     # ax.set_ylim([-9.5, 9.5])
 
+=======
+>>>>>>> upstream/master
                     if plot_points:
                         self.h_points, = ax.plot(self.mesh.points[:,0], self.mesh.points[:,1],'o',markersize=point_radius,color='k')
 
@@ -3049,9 +3164,16 @@ class PostProcess(object):
             plot_edges=plot_edges, plot_on_faces=plot_on_faces)
 
         # UNPACK
+<<<<<<< HEAD
         x_edges = tmesh.x_edges
         y_edges = tmesh.y_edges
         z_edges = tmesh.z_edges
+=======
+        if plot_edges:
+            x_edges = tmesh.x_edges
+            y_edges = tmesh.y_edges
+            z_edges = tmesh.z_edges
+>>>>>>> upstream/master
         nnode = tmesh.nnode
         nelem = tmesh.nelem
         nsize = tmesh.nsize
@@ -3317,6 +3439,42 @@ class PostProcess(object):
 
 
     #-----------------------------------------------------------------------------#
+<<<<<<< HEAD
+=======
+    def Tessellate(self,*args,**kwargs):
+        """Tesselate meshes"""
+        if len(args) == 0:
+            if self.mesh is None:
+                raise ValueError("Mesh not set for post-processing")
+            else:
+                mesh = self.mesh
+        else:
+            mesh = args[0]
+
+        if len(args) > 1:
+            TotalDisp = args[1]
+        else:
+            if self.sol is None:
+                TotalDisp = np.zeros_like(mesh.points)
+            else:
+                TotalDisp = self.sol
+
+        if mesh.element_type == "line":
+            return self.TessellateLines(mesh,TotalDisp,**kwargs)
+        elif mesh.element_type == "tri":
+            return self.TessellateTris(mesh,TotalDisp,**kwargs)
+        elif mesh.element_type == "quad":
+            return self.TessellateQuads(mesh,TotalDisp,**kwargs)
+        elif mesh.element_type == "tet":
+            return self.TessellateTets(mesh,TotalDisp,**kwargs)
+        elif mesh.element_type == "hex":
+            return self.TessellateHexes(mesh,TotalDisp,**kwargs)
+        else:
+            raise ValueError("Unknown mesh type")
+
+
+
+>>>>>>> upstream/master
     @staticmethod
     def TessellateLines(mesh, TotalDisp, QuantityToPlot=None,
         ProjectionFlags=None, interpolation_degree=10, EquallySpacedPoints=False,
@@ -3370,7 +3528,13 @@ class PostProcess(object):
             for iedge in range(mesh.nelem):
                 edge = mesh.elements[iedge,:]
                 coord_edge = vpoints[edge,:]
+<<<<<<< HEAD
                 if pdim == 2:
+=======
+                if pdim == 1:
+                    x_edges[:,iedge] = np.dot(coord_edge.T,BasesOneD)
+                elif pdim == 2:
+>>>>>>> upstream/master
                     x_edges[:,iedge], y_edges[:,iedge] = np.dot(coord_edge.T,BasesOneD)
                 else:
                     x_edges[:,iedge], y_edges[:,iedge], z_edges[:,iedge] = np.dot(coord_edge.T,BasesOneD)
@@ -3508,11 +3672,22 @@ class PostProcess(object):
         Xplot = np.zeros((nnode,pdim),dtype=np.float64)
         Tplot = np.zeros((nelem,3),dtype=np.int64)
         Uplot = np.zeros(nnode,dtype=np.float64)
+<<<<<<< HEAD
         if plot_on_faces and QuantityToPlot is not None:
             Uplot = np.zeros(nelem,dtype=np.float64)
 
         if QuantityToPlot is None:
             quantity_to_plot = np.zeros(mesh.nelem)
+=======
+        # if plot_on_faces and QuantityToPlot is not None:
+        #     Uplot = np.zeros(nelem,dtype=np.float64)
+
+        if QuantityToPlot is None:
+            if plot_on_faces:
+                quantity_to_plot = np.zeros(mesh.nelem)
+            else:
+                quantity_to_plot = np.zeros(mesh.points.shape[0])
+>>>>>>> upstream/master
         else:
             quantity_to_plot = QuantityToPlot
 
@@ -3528,8 +3703,11 @@ class PostProcess(object):
                 Uplot[ielem*nsize:(ielem+1)*nsize] = np.dot(BasesTri.T, quantity_to_plot[mesh.elements[ielem,:]]).flatten()
 
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> upstream/master
         tmesh = Mesh()
         tmesh.element_type = "tri"
         tmesh.elements = Tplot
@@ -3687,7 +3865,11 @@ class PostProcess(object):
             tmesh.edge_elements = edge_elements
             tmesh.reference_edges = reference_edges
 
+<<<<<<< HEAD
             return tmesh
+=======
+        return tmesh
+>>>>>>> upstream/master
 
 
 

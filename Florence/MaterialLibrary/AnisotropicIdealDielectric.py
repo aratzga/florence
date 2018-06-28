@@ -41,7 +41,11 @@ class AnisotropicIdealDielectric(Material):
 
         return np.ascontiguousarray(D), None, np.ascontiguousarray(H_Voigt)
 
+<<<<<<< HEAD
     def Hessian(self,StrainTensors,ElectricDisplacementx,elem=0,gcounter=0):
+=======
+    def Hessian(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
+>>>>>>> upstream/master
         e = self.e
         I = StrainTensors['I']
         J = StrainTensors['J'][gcounter]
@@ -50,6 +54,12 @@ class AnisotropicIdealDielectric(Material):
         self.dielectric_tensor = -e/J
         return self.dielectric_tensor
 
+<<<<<<< HEAD
+=======
+    def CauchyStress(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
+        pass
+
+>>>>>>> upstream/master
     def ElectricDisplacementx(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
         # D = self.legendre_transform.GetElectricDisplacement(self, StrainTensors, ElectricFieldx, elem, gcounter)
         e = self.e
@@ -58,7 +68,11 @@ class AnisotropicIdealDielectric(Material):
         D_exact = np.dot(e/J,E)
         return D_exact
 
+<<<<<<< HEAD
     def Permittivity(self,StrainTensors,ElectricDisplacementx,elem=0,gcounter=0):
+=======
+    def Permittivity(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
+>>>>>>> upstream/master
         e = self.e
         J = StrainTensors['J'][gcounter]
         # Negative definite inverse is needed due to Legendre transform

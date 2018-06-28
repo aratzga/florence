@@ -16,12 +16,29 @@ np.set_printoptions(linewidth=300)
 
 # APPEND ALL REQUIRED PATHS
 sys.path.append(os.path.join(os.path.expanduser("~"),"florence"))
+<<<<<<< HEAD
 sys.path.append('../examples/simple_laplace/')
 sys.path.append('../examples/car_crash_analysis/')
 sys.path.append('../examples/curved_mesh_generation/')
 sys.path.append('../examples/hyperelastic_explicit_dynamics/')
 sys.path.append('../examples/wrinkling_of_soft_dielectric_film/')
 sys.path.append('../examples/linear_elastic_dynamics/')
+=======
+
+sys.path.append('../examples/simple_laplace/')
+sys.path.append('../examples/linear_elastic_dynamics/')
+sys.path.append('../examples/curved_mesh_generation/')
+sys.path.append('../examples/car_crash_analysis/')
+sys.path.append('../examples/hyperelastic_explicit_dynamics/')
+sys.path.append('../examples/electro_hyperelastic_explicit_dynamics')
+sys.path.append('../examples/wrinkling_of_soft_dielectric_film/')
+sys.path.append('../examples/staggered_multiphysics_solver')
+sys.path.append('../examples/mixed_fem_multiphysics_strain_gradient_solvers')
+
+
+sys.path.append('./test_basics')
+sys.path.append('./test_BEM')
+>>>>>>> upstream/master
 
 
 # IMPORT FLORENCE
@@ -34,6 +51,15 @@ from high_order_curved_mesh_generation import high_order_curved_mesh_generation
 from hyperelastic_explicit_dynamics import explicit_dynamics_mechanics
 from wrinkling_of_soft_dielectric_film import dielectric_wrinkling
 from linear_elastic_dynamics import linear_elastic_dynamics
+<<<<<<< HEAD
+=======
+from electro_hyperelastic_explicit_dynamics import electro_hyperelastic_explicit_dynamics
+from staggered_multiphysics_solver import staggered_multiphysics_solver
+from mixed_fem_multiphysics_strain_gradient_solvers import strain_gradient_elastodynamics
+
+from test_basics import test_quadrature_functionspace, test_mesh_postprocess_material, test_material
+from test_BEM import test_BEM
+>>>>>>> upstream/master
 
 tick  = u'\u2713'.encode('utf8')  + b' : '
 cross = u'\u2717'.encode('utf8')  + b' : '
@@ -171,6 +197,7 @@ def final_solution_checker(material,solver,fem_solver,TotalDisp,Dict):
 
 
 
+<<<<<<< HEAD
 
 def test_examples():
     # RUN EXAMPLES AT TEST CASES
@@ -180,10 +207,37 @@ def test_examples():
     explicit_dynamics_mechanics()
     dielectric_wrinkling()
     linear_elastic_dynamics()
+=======
+def test_examples():
+
+    print("Statrting to run the test suite")
+
+    # RUN EXAMPLES AT TEST CASES
+    simple_laplace()
+    high_order_curved_mesh_generation()
+    linear_elastic_dynamics()
+    crash_analysis()
+    explicit_dynamics_mechanics()
+    electro_hyperelastic_explicit_dynamics()
+    dielectric_wrinkling()
+    staggered_multiphysics_solver()
+    strain_gradient_elastodynamics()
+
+    # RUN BASICS TESTSUITE
+    test_quadrature_functionspace()
+    test_mesh_postprocess_material()
+    test_material()
+    test_BEM()
+
+    print("Successfully finished running all tests")
+>>>>>>> upstream/master
 
 
 # RUN EXAPLES AS TEST CASES
 if __name__ == "__main__":
     test_examples()
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master

@@ -2,6 +2,11 @@ import numpy as np
 from numpy import einsum
 from Florence.Tensor import trace, Voigt
 from .MaterialBase import Material
+<<<<<<< HEAD
+=======
+from Florence.LegendreTransform import LegendreTransform
+
+>>>>>>> upstream/master
 
 class IsotropicElectroMechanics_0(Material):
     """Simplest Electromechanical Helmoltz energy

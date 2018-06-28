@@ -5,9 +5,20 @@ EXT_POSTFIX= so
 CYTHONFLAGS = -DNPY_NO_DEPRECATED_API
 
 CYTHON = cython --cplus
+<<<<<<< HEAD
 REMOVE = rm -rf
 MOVE = mv
 ENTER = cd
+=======
+
+ifeq ($(OS),Windows_NT)
+REMOVE = del
+MOVE = move
+else
+REMOVE = rm -rf
+MOVE = mv
+endif
+>>>>>>> upstream/master
 
 # FASTOR_INCLUDE_PATH=
 # UNAME_S := $(shell uname -s)
@@ -55,6 +66,13 @@ endif
 
 CXXFLAGS += $(FASTOR_OPTFLAGS) -I$(FASTOR_INCLUDE_PATH)
 
+<<<<<<< HEAD
+=======
+ifeq ($(OS),Windows_NT)
+CXXFLAGS += -D_hypot=hypot -m64 -Wno-format-extra-args -Wno-format
+endif
+
+>>>>>>> upstream/master
 all: build_module
 
 build_module: 

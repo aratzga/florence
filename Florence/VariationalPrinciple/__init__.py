@@ -1,5 +1,8 @@
 from .VariationalPrinciple import *
+<<<<<<< HEAD
 from .NearlyIncompressibleHuWashizu import *
+=======
+>>>>>>> upstream/master
 from .DisplacementFormulation import *
 from .DisplacementPotentialFormulation import *
 from .LaplacianFormulation import *

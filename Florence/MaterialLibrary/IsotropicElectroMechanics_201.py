@@ -28,6 +28,10 @@ class IsotropicElectroMechanics_201(Material):
         # LOW LEVEL DISPATCHER
         self.has_low_level_dispatcher = False
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
     def Hessian(self,StrainTensors,ElectricDisplacementx,elem=0,gcounter=0):
 
         mu1 = self.mu1

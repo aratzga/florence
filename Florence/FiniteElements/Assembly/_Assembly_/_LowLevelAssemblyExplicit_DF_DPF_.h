@@ -7,21 +7,52 @@
 #include "_TractionDF_.h"
 #include "_TractionDPF_.h"
 
+<<<<<<< HEAD
 #include "_NeoHookean_.h"
 #include "_MooneyRivlin_.h"
 #include "_ExplicitMooneyRivlin_.h"
 #include "_IsotropicElectroMechanics_101_.h"
 #include "_IsotropicElectroMechanics_108_.h"
+=======
+#include "_ExplicitMooneyRivlin_.h"
+#include "_ExplicitIsotropicElectroMechanics_108_.h"
+#include "_NeoHookean_.h"
+#include "_MooneyRivlin_.h"
+#include "_NearlyIncompressibleMooneyRivlin_.h"
+#include "_IsotropicElectroMechanics_101_.h"
+#include "_IsotropicElectroMechanics_105_.h"
+#include "_IsotropicElectroMechanics_106_.h"
+#include "_IsotropicElectroMechanics_107_.h"
+#include "_IsotropicElectroMechanics_108_.h"
+#include "_LinearElastic_.h"
+>>>>>>> upstream/master
 
 
 #ifndef EXPLICIT_OLD
 
 // Kinematics
 //
+<<<<<<< HEAD
 template<int ndim, typename std::enable_if<ndim==2,bool>::type = 0>
 FASTOR_INLINE void KinematicMeasures__(Real *MaterialGradient, Real *current_sp, Real *current_F, Real &detJ,
     const Real *current_Jm, Real AllGauss_, const Real *LagrangeElemCoords_, const Real *EulerElemCoords_,
     int ngauss, int nodeperelem, int update)  {
+=======
+
+#ifdef __AVX__
+
+template<int ndim, typename std::enable_if<ndim==2,bool>::type = 0>
+FASTOR_INLINE void KinematicMeasures__(
+    Real* FASTOR_RESTRICT MaterialGradient,
+    Real* FASTOR_RESTRICT current_sp,
+    Real* FASTOR_RESTRICT current_F,
+    Real &detJ,
+    const Real* FASTOR_RESTRICT current_Jm,
+    Real AllGauss_,
+    const Real* FASTOR_RESTRICT LagrangeElemCoords_,
+    const Real *FASTOR_RESTRICT EulerElemCoords_,
+    int nodeperelem,
+    int update)  {
 
     Real FASTOR_ALIGN ParentGradientX[ndim*ndim];
     Real FASTOR_ALIGN invParentGradientX[ndim*ndim];
@@ -29,6 +60,94 @@ FASTOR_INLINE void KinematicMeasures__(Real *MaterialGradient, Real *current_sp,
     Real FASTOR_ALIGN invParentGradientx[ndim*ndim];
     Real FASTOR_ALIGN current_Ft[ndim*ndim];
 
+    // USING A STL BASED FILLER REMOVES THE ANNOYING BUG
+    std::fill_n(ParentGradientX,ndim*ndim,0.);
+    std::fill_n(ParentGradientx,ndim*ndim,0.);
+    std::fill_n(current_Ft,ndim*ndim,0.);
+
+    _matmul_2k2(nodeperelem,current_Jm,LagrangeElemCoords_,ParentGradientX);
+    _matmul_2k2(nodeperelem,current_Jm,EulerElemCoords_,ParentGradientx);
+
+    inv2x2(ParentGradientX,invParentGradientX);
+    const Real detx = invdet2x2(ParentGradientx,invParentGradientx);
+
+    detJ = AllGauss_*fabs(detx);
+
+    _matmul_22k(nodeperelem,invParentGradientX,current_Jm,MaterialGradient);
+    _matmul_22k(nodeperelem,invParentGradientx,current_Jm,current_sp);
+
+    // Compute deformation gradient F
+    _matmul_2k2(nodeperelem,MaterialGradient,EulerElemCoords_,current_Ft);
+    Fastor::_transpose<Real,ndim,ndim>(current_Ft,current_F);
+}
+
+template<int ndim, typename std::enable_if<ndim==3,bool>::type = 0>
+FASTOR_INLINE void KinematicMeasures__(
+    Real* FASTOR_RESTRICT MaterialGradient,
+    Real* FASTOR_RESTRICT current_sp,
+    Real* FASTOR_RESTRICT current_F,
+    Real &detJ,
+    const Real* FASTOR_RESTRICT current_Jm,
+    Real AllGauss_,
+    const Real* FASTOR_RESTRICT LagrangeElemCoords_,
+    const Real *FASTOR_RESTRICT EulerElemCoords_,
+    int nodeperelem,
+    int update)  {
+
+    Real FASTOR_ALIGN ParentGradientX[ndim*ndim];
+    Real FASTOR_ALIGN invParentGradientX[ndim*ndim];
+    Real FASTOR_ALIGN ParentGradientx[ndim*ndim];
+    Real FASTOR_ALIGN invParentGradientx[ndim*ndim];
+    Real FASTOR_ALIGN current_Ft[ndim*ndim];
+
+    // USING A STL BASED FILLER REMOVES THE ANNOYING BUG
+    std::fill_n(ParentGradientX,ndim*ndim,0.);
+    std::fill_n(ParentGradientx,ndim*ndim,0.);
+    std::fill_n(current_Ft,ndim*ndim,0.);
+
+    _matmul_3k3(nodeperelem,current_Jm,LagrangeElemCoords_,ParentGradientX);
+    _matmul_3k3(nodeperelem,current_Jm,EulerElemCoords_,ParentGradientx);
+
+    inv3x3(ParentGradientX,invParentGradientX);
+    const Real detx = invdet3x3(ParentGradientx,invParentGradientx);
+
+    detJ = AllGauss_*std::abs(detx);
+
+    _matmul_33k(nodeperelem,invParentGradientX,current_Jm,MaterialGradient);
+    _matmul_33k(nodeperelem,invParentGradientx,current_Jm,current_sp);
+
+    // Compute deformation gradient F
+    _matmul_3k3(nodeperelem,MaterialGradient,EulerElemCoords_,current_Ft);
+    Fastor::_transpose<Real,ndim,ndim>(current_Ft,current_F);
+
+}
+
+
+
+#else
+
+
+
+template<int ndim, typename std::enable_if<ndim==2,bool>::type = 0>
+FASTOR_INLINE void KinematicMeasures__(Real *MaterialGradient, Real *current_sp, Real *current_F, Real &detJ,
+    const Real *current_Jm, Real AllGauss_, const Real *LagrangeElemCoords_, const Real *EulerElemCoords_,
+    int nodeperelem, int update)  {
+>>>>>>> upstream/master
+
+    Real FASTOR_ALIGN ParentGradientX[ndim*ndim];
+    Real FASTOR_ALIGN invParentGradientX[ndim*ndim];
+    Real FASTOR_ALIGN ParentGradientx[ndim*ndim];
+    Real FASTOR_ALIGN invParentGradientx[ndim*ndim];
+    Real FASTOR_ALIGN current_Ft[ndim*ndim];
+
+<<<<<<< HEAD
+=======
+    // USING A STL BASED FILLER REMOVES THE ANNOYING BUG
+    std::fill_n(ParentGradientX,ndim*ndim,0.);
+    std::fill_n(ParentGradientx,ndim*ndim,0.);
+    std::fill_n(current_Ft,ndim*ndim,0.);
+
+>>>>>>> upstream/master
     _matmul_(ndim,ndim,nodeperelem,current_Jm,LagrangeElemCoords_,ParentGradientX);
     _matmul_(ndim,ndim,nodeperelem,current_Jm,EulerElemCoords_,ParentGradientx);
 
@@ -48,7 +167,11 @@ FASTOR_INLINE void KinematicMeasures__(Real *MaterialGradient, Real *current_sp,
 template<int ndim, typename std::enable_if<ndim==3,bool>::type = 0>
 FASTOR_INLINE void KinematicMeasures__(Real *MaterialGradient, Real *current_sp, Real *current_F, Real &detJ,
     const Real *current_Jm, Real AllGauss_, const Real *LagrangeElemCoords_, const Real *EulerElemCoords_,
+<<<<<<< HEAD
     int ngauss, int nodeperelem, int update)  {
+=======
+    int nodeperelem, int update)  {
+>>>>>>> upstream/master
 
     Real FASTOR_ALIGN ParentGradientX[ndim*ndim];
     Real FASTOR_ALIGN invParentGradientX[ndim*ndim];
@@ -56,6 +179,14 @@ FASTOR_INLINE void KinematicMeasures__(Real *MaterialGradient, Real *current_sp,
     Real FASTOR_ALIGN invParentGradientx[ndim*ndim];
     Real FASTOR_ALIGN current_Ft[ndim*ndim];
 
+<<<<<<< HEAD
+=======
+    // USING A STL BASED FILLER REMOVES THE ANNOYING BUG
+    std::fill_n(ParentGradientX,ndim*ndim,0.);
+    std::fill_n(ParentGradientx,ndim*ndim,0.);
+    std::fill_n(current_Ft,ndim*ndim,0.);
+
+>>>>>>> upstream/master
     _matmul_(ndim,ndim,nodeperelem,current_Jm,LagrangeElemCoords_,ParentGradientX);
     _matmul_(ndim,ndim,nodeperelem,current_Jm,EulerElemCoords_,ParentGradientx);
 
@@ -71,6 +202,11 @@ FASTOR_INLINE void KinematicMeasures__(Real *MaterialGradient, Real *current_sp,
     _matmul_(ndim,ndim,nodeperelem,MaterialGradient,EulerElemCoords_,current_Ft);
     Fastor::_transpose<Real,ndim,ndim>(current_Ft,current_F);
 }
+<<<<<<< HEAD
+=======
+
+#endif
+>>>>>>> upstream/master
 // // //
 
 
@@ -153,7 +289,11 @@ void _GlobalAssemblyExplicit_DF_DPF_<2>(const Real *points,
     Real detJ                       = 0;
 
     Real FASTOR_ALIGN F[ndim*ndim];
+<<<<<<< HEAD
     Real FASTOR_ALIGN ElectricFieldx[ndim];
+=======
+    Real FASTOR_ALIGN ElectricFieldx[ndim]; std::fill_n(ElectricFieldx,ndim,0.);
+>>>>>>> upstream/master
     Tensor<Real,ndim> D;
     Tensor<Real,ndim,ndim> stress;
 
@@ -161,11 +301,25 @@ void _GlobalAssemblyExplicit_DF_DPF_<2>(const Real *points,
     Real *traction                  = allocate<Real>(ndof);
 
 
+<<<<<<< HEAD
     auto mat_obj0 = _NeoHookean_<Real>(mu,lamb);
     auto mat_obj1 = _MooneyRivlin_<Real>(mu1,mu2,lamb);
     auto mat_obj2 = _ExplicitMooneyRivlin_<Real>(mu1,mu2,lamb);
     auto mat_obj3 = _IsotropicElectroMechanics_101_<Real>(mu,lamb,eps_1);
     auto mat_obj4 = _IsotropicElectroMechanics_108_<Real>(mu1,mu2,lamb,eps_2);
+=======
+    auto mat_obj0 = _ExplicitMooneyRivlin_<Real>(mu1,mu2,lamb);
+    auto mat_obj1 = _NeoHookean_<Real>(mu,lamb);
+    auto mat_obj2 = _MooneyRivlin_<Real>(mu1,mu2,lamb);
+    auto mat_obj3 = _NearlyIncompressibleMooneyRivlin_<Real>(mu1,mu2,mu3);
+    auto mat_obj4 = _IsotropicElectroMechanics_101_<Real>(mu,lamb,eps_1);
+    auto mat_obj5 = _IsotropicElectroMechanics_105_<Real>(mu1,mu2,lamb,eps_1,eps_2);
+    auto mat_obj6 = _IsotropicElectroMechanics_106_<Real>(mu1,mu2,lamb,eps_1,eps_2);
+    auto mat_obj7 = _IsotropicElectroMechanics_107_<Real>(mu1,mu2,mue,lamb,eps_1,eps_2,eps_e);
+    auto mat_obj8 = _IsotropicElectroMechanics_108_<Real>(mu1,mu2,lamb,eps_2);
+    auto mat_obj9 = _ExplicitIsotropicElectroMechanics_108_<Real>(mu1,mu2,lamb,eps_2);
+    auto mat_obj10 = _LinearElastic_<Real>(mu,lamb);
+>>>>>>> upstream/master
 
 
     // LOOP OVER ELEMETNS
@@ -207,12 +361,16 @@ void _GlobalAssemblyExplicit_DF_DPF_<2>(const Real *points,
                                     AllGauss[g],
                                     LagrangeElemCoords,
                                     EulerElemCoords,
+<<<<<<< HEAD
                                     ngauss,
+=======
+>>>>>>> upstream/master
                                     nodeperelem,
                                     requires_geometry_update
                                     );
 
 
+<<<<<<< HEAD
             // COMPUTE ELECTRIC FIELD
             Real iE0 = 0, iE1 = 0;
             for (Integer j=0; j<nodeperelem; ++j) {
@@ -222,24 +380,69 @@ void _GlobalAssemblyExplicit_DF_DPF_<2>(const Real *points,
             }
             ElectricFieldx[0] = -iE0;
             ElectricFieldx[1] = -iE1;
+=======
+            if (formulation_number==1) {
+                // COMPUTE ELECTRIC FIELD
+                Real iE0 = 0, iE1 = 0;
+                for (Integer j=0; j<nodeperelem; ++j) {
+                    const Real potE = ElectricPotentialElem[j];
+                    iE0 += SpatialGradient[j]*potE;
+                    iE1 += SpatialGradient[nodeperelem+j]*potE;
+                }
+                ElectricFieldx[0] = -iE0;
+                ElectricFieldx[1] = -iE1;
+            }
+>>>>>>> upstream/master
 
 
             // COMPUTE KINETIC MEASURES
             if (material_number==0) {
+<<<<<<< HEAD
                 std::tie(stress,std::ignore) = mat_obj0.template _KineticMeasures_<Real,ndim>(F);
+=======
+                stress = mat_obj0.template _KineticMeasures_<Real,ndim>(F);
+            }
+            else if (material_number==9) {
+                std::tie(D,stress) = mat_obj9.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+>>>>>>> upstream/master
             }
             else if (material_number==1) {
                 std::tie(stress,std::ignore) = mat_obj1.template _KineticMeasures_<Real,ndim>(F);
             }
             else if (material_number==2) {
+<<<<<<< HEAD
                 stress = mat_obj2.template _KineticMeasures_<Real,ndim>(F);
             }
             else if (material_number==3) {
                 std::tie(D,stress,std::ignore) = mat_obj3.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+=======
+                std::tie(stress,std::ignore) = mat_obj2.template _KineticMeasures_<Real,ndim>(F);
+            }
+            else if (material_number==3) {
+                std::tie(stress,std::ignore) = mat_obj3.template _KineticMeasures_<Real,ndim>(F);
+>>>>>>> upstream/master
             }
             else if (material_number==4) {
                 std::tie(D,stress,std::ignore) = mat_obj4.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
             }
+<<<<<<< HEAD
+=======
+            else if (material_number==5) {
+                std::tie(D,stress,std::ignore) = mat_obj5.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+            }
+            else if (material_number==6) {
+                std::tie(D,stress,std::ignore) = mat_obj6.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+            }
+            else if (material_number==7) {
+                std::tie(D,stress,std::ignore) = mat_obj7.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+            }
+            else if (material_number==8) {
+                std::tie(D,stress,std::ignore) = mat_obj8.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+            }
+            else if (material_number==10) {
+                std::tie(stress,std::ignore) = mat_obj10.template _KineticMeasures_<Real,ndim>(F);
+            }
+>>>>>>> upstream/master
 
 
             // COMPUTE TRACTION
@@ -347,7 +550,11 @@ void _GlobalAssemblyExplicit_DF_DPF_<3>(const Real *points,
     Real detJ                       = 0;
 
     Real FASTOR_ALIGN F[ndim*ndim];
+<<<<<<< HEAD
     Real FASTOR_ALIGN ElectricFieldx[ndim];
+=======
+    Real FASTOR_ALIGN ElectricFieldx[ndim]; std::fill_n(ElectricFieldx,ndim,0.);
+>>>>>>> upstream/master
     Tensor<Real,ndim> D;
     Tensor<Real,ndim,ndim> stress;
 
@@ -355,11 +562,25 @@ void _GlobalAssemblyExplicit_DF_DPF_<3>(const Real *points,
     Real *traction                  = allocate<Real>(ndof);
 
 
+<<<<<<< HEAD
     auto mat_obj0 = _NeoHookean_<Real>(mu,lamb);
     auto mat_obj1 = _MooneyRivlin_<Real>(mu1,mu2,lamb);
     auto mat_obj2 = _ExplicitMooneyRivlin_<Real>(mu1,mu2,lamb);
     auto mat_obj3 = _IsotropicElectroMechanics_101_<Real>(mu,lamb,eps_1);
     auto mat_obj4 = _IsotropicElectroMechanics_108_<Real>(mu1,mu2,lamb,eps_2);
+=======
+    auto mat_obj0 = _ExplicitMooneyRivlin_<Real>(mu1,mu2,lamb);
+    auto mat_obj1 = _NeoHookean_<Real>(mu,lamb);
+    auto mat_obj2 = _MooneyRivlin_<Real>(mu1,mu2,lamb);
+    auto mat_obj3 = _NearlyIncompressibleMooneyRivlin_<Real>(mu1,mu2,mu3);
+    auto mat_obj4 = _IsotropicElectroMechanics_101_<Real>(mu,lamb,eps_1);
+    auto mat_obj5 = _IsotropicElectroMechanics_105_<Real>(mu1,mu2,lamb,eps_1,eps_2);
+    auto mat_obj6 = _IsotropicElectroMechanics_106_<Real>(mu1,mu2,lamb,eps_1,eps_2);
+    auto mat_obj7 = _IsotropicElectroMechanics_107_<Real>(mu1,mu2,mue,lamb,eps_1,eps_2,eps_e);
+    auto mat_obj8 = _IsotropicElectroMechanics_108_<Real>(mu1,mu2,lamb,eps_2);
+    auto mat_obj9 = _ExplicitIsotropicElectroMechanics_108_<Real>(mu1,mu2,lamb,eps_2);
+    auto mat_obj10 = _LinearElastic_<Real>(mu,lamb);
+>>>>>>> upstream/master
 
 
     // LOOP OVER ELEMETNS
@@ -404,12 +625,16 @@ void _GlobalAssemblyExplicit_DF_DPF_<3>(const Real *points,
                                     AllGauss[g],
                                     LagrangeElemCoords,
                                     EulerElemCoords,
+<<<<<<< HEAD
                                     ngauss,
+=======
+>>>>>>> upstream/master
                                     nodeperelem,
                                     requires_geometry_update
                                     );
 
 
+<<<<<<< HEAD
             // COMPUTE ELECTRIC FIELD
             Real iE0 = 0, iE1 = 0, iE2 = 0;
             for (Integer j=0; j<nodeperelem; ++j) {
@@ -421,24 +646,72 @@ void _GlobalAssemblyExplicit_DF_DPF_<3>(const Real *points,
             ElectricFieldx[0] = -iE0;
             ElectricFieldx[1] = -iE1;
             ElectricFieldx[2] = -iE2;
+=======
+            if (formulation_number == 1) {
+                // COMPUTE ELECTRIC FIELD
+                Real iE0 = 0, iE1 = 0, iE2 = 0;
+                for (Integer j=0; j<nodeperelem; ++j) {
+                    const Real potE = ElectricPotentialElem[j];
+                    iE0 += SpatialGradient[j]*potE;
+                    iE1 += SpatialGradient[nodeperelem+j]*potE;
+                    iE2 += SpatialGradient[2*nodeperelem+j]*potE;
+                }
+                ElectricFieldx[0] = -iE0;
+                ElectricFieldx[1] = -iE1;
+                ElectricFieldx[2] = -iE2;
+            }
+>>>>>>> upstream/master
 
 
             // COMPUTE KINETIC MEASURES
             if (material_number==0) {
+<<<<<<< HEAD
                 std::tie(stress,std::ignore) = mat_obj0.template _KineticMeasures_<Real,ndim>(F);
+=======
+                stress = mat_obj0.template _KineticMeasures_<Real,ndim>(F);
+            }
+            else if (material_number==9) {
+                std::tie(D,stress) = mat_obj9.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+>>>>>>> upstream/master
             }
             else if (material_number==1) {
                 std::tie(stress,std::ignore) = mat_obj1.template _KineticMeasures_<Real,ndim>(F);
             }
             else if (material_number==2) {
+<<<<<<< HEAD
                 stress = mat_obj2.template _KineticMeasures_<Real,ndim>(F);
             }
             else if (material_number==3) {
                 std::tie(D,stress,std::ignore) = mat_obj3.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+=======
+                std::tie(stress,std::ignore) = mat_obj2.template _KineticMeasures_<Real,ndim>(F);
+            }
+            else if (material_number==3) {
+                std::tie(stress,std::ignore) = mat_obj3.template _KineticMeasures_<Real,ndim>(F);
+>>>>>>> upstream/master
             }
             else if (material_number==4) {
                 std::tie(D,stress,std::ignore) = mat_obj4.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
             }
+<<<<<<< HEAD
+=======
+            else if (material_number==5) {
+                std::tie(D,stress,std::ignore) = mat_obj5.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+            }
+            else if (material_number==6) {
+                std::tie(D,stress,std::ignore) = mat_obj6.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+            }
+            else if (material_number==7) {
+                std::tie(D,stress,std::ignore) = mat_obj7.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+            }
+            else if (material_number==8) {
+                std::tie(D,stress,std::ignore) = mat_obj8.template _KineticMeasures_<Real,ndim>(F,ElectricFieldx);
+            }
+            else if (material_number==10) {
+                std::tie(stress,std::ignore) = mat_obj10.template _KineticMeasures_<Real,ndim>(F);
+            }
+
+>>>>>>> upstream/master
 
             if (formulation_number == 0) {
 
@@ -930,6 +1203,7 @@ void _GlobalAssemblyExplicit_DF_DPF_(const Real *points,
 
 
 #endif // _LOWLEVELASSEMBLYDPF__H
+<<<<<<< HEAD
 
 
 
@@ -1199,3 +1473,5 @@ void _GlobalAssemblyExplicit_DF_DPF_(const Real *points,
 
 
 // #endif // _LOWLEVELASSEMBLYDPF__H
+=======
+>>>>>>> upstream/master

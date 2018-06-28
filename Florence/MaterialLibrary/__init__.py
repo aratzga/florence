@@ -55,6 +55,10 @@ from .Multi_Piezoelectric_100 import *
 
 # EXPLICIT MODELS
 from .ExplicitMooneyRivlin import *
+<<<<<<< HEAD
+=======
+from .ExplicitIsotropicElectroMechanics_108 import *
+>>>>>>> upstream/master
 
 
 # ELECTROSTATIC MODELS

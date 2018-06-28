@@ -44,10 +44,16 @@ class LinearElastic(Material):
         mu = self.mu
         lamb = self.lamb
 
+<<<<<<< HEAD
         if self.ndim == 3:
             tre = trace(strain)
         elif self.ndim == 2:
             tre = trace(strain) + 1
+=======
+        tre = trace(strain)
+        if self.ndim == 2:
+            tre += 1.
+>>>>>>> upstream/master
 
         return 2*mu*strain + lamb*tre*I
 

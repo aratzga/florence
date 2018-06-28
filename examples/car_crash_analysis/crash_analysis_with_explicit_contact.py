@@ -2,8 +2,11 @@ import os
 import numpy as np
 from Florence import *
 
+<<<<<<< HEAD
 #for testing second commit
 #for testing third commit
+=======
+>>>>>>> upstream/master
 
 def crash_analysis():
     """ Car crash analysis in a simplified 2D car geometry with hyperelastic
@@ -60,14 +63,26 @@ def crash_analysis():
         mass_type="lumped",
         analysis_nature="nonlinear",
         optimise=True,
+<<<<<<< HEAD
         save_frequency=50)
+=======
+        save_frequency=20)
+>>>>>>> upstream/master
 
     solution = fem_solver.Solve(formulation=formulation, material=material, mesh=mesh,
         boundary_condition=boundary_condition, contact_formulation=contact_formulation)
 
     # Write results to vtk file
+<<<<<<< HEAD
     solution.WriteVTK("crash_analysis_results", quantity=0)
 
 
 if __name__ == "__main__":
     crash_analysis()
+=======
+    # solution.WriteVTK("crash_analysis_results", quantity=0)
+
+
+if __name__ == "__main__":
+    crash_analysis()
+>>>>>>> upstream/master

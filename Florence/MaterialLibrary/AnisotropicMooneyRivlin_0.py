@@ -12,6 +12,7 @@ class AnisotropicMooneyRivlin_0(Material):
     """A compressible transervely isotropic model with the isotropic part being Mooney-Rivlin
         The energy is given by:
 
+<<<<<<< HEAD
             W(C) =  gamma * ( alpha*(C:I) + beta*(G:I) ) + 
                     eta*(1-alpha)*( (N C N)**2 + N G N) - ut*J + lambda/2*(J-1)**2
 
@@ -19,6 +20,15 @@ class AnisotropicMooneyRivlin_0(Material):
                 zero at the origin
 
         the parameter "gamma" controls the amount of anisotropy and the vector N(ndim,1) is 
+=======
+            W(C) =  gamma * ( alpha*(C:I) + beta*(G:I) ) +
+                    eta*(1-alpha)*( (N C N)**2 + N G N) - ut*J + lambda/2*(J-1)**2
+
+            ut = 2.*gamma*(alpha+2.0*beta) + 2.*(1. - gamma)*eta  # for the stress to be
+                zero at the origin
+
+        the parameter "gamma" controls the amount of anisotropy and the vector N(ndim,1) is
+>>>>>>> upstream/master
         the direction of anisotropy
 
     """
@@ -60,7 +70,11 @@ class AnisotropicMooneyRivlin_0(Material):
         # FIX GAMMA
         gamma = 0.5
         # gamma = 1.0
+<<<<<<< HEAD
         alpha = mu/2./gamma 
+=======
+        alpha = mu/2./gamma
+>>>>>>> upstream/master
         beta  = mu/2./gamma
         eta   = mu/3.
         ut    = 2.*gamma*(alpha+2.0*beta) + 2.*(1. - gamma)*eta
@@ -78,7 +92,11 @@ class AnisotropicMooneyRivlin_0(Material):
                 lamb*(2.*J-1.)*einsum('ij,kl',I,I) - lamb*(J-1.) * ( einsum('ik,jl',I,I) + einsum('il,jk',I,I) )
 
         H_Voigt = Voigt(H_Voigt ,1)
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> upstream/master
         self.H_VoigtSize = H_Voigt.shape[0]
 
         return H_Voigt
@@ -104,7 +122,11 @@ class AnisotropicMooneyRivlin_0(Material):
         # FIX GAMMA
         gamma = 0.5
         # gamma = 1.0
+<<<<<<< HEAD
         alpha = mu/2./gamma 
+=======
+        alpha = mu/2./gamma
+>>>>>>> upstream/master
         beta  = mu/2./gamma
         eta   = mu/3.
         ut    = 2.*gamma*(alpha+2.0*beta) + 2.*(1. - gamma)*eta
@@ -122,15 +144,23 @@ class AnisotropicMooneyRivlin_0(Material):
                  2.*(1.- gamma)*eta/J*(innerHN*I - outerHN) - \
                  ut*I + lamb*(J-1.)*I
 
+<<<<<<< HEAD
 
         # print stress
         return stress
 
     def ElectricDisplacementx(self,MaterialArgs,StrainTensors,ElectricFieldx):
+=======
+        return stress
+
+
+    def ElectricDisplacementx(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
+>>>>>>> upstream/master
         ndim = StrainTensors['I'].shape[0]
         return np.zeros((ndim,1))
 
 
+<<<<<<< HEAD
 
 
 
@@ -619,3 +649,5 @@ class AnisotropicMooneyRivlin_0(Material):
 #       ndim = StrainTensors['I'].shape[0]
 #       return np.zeros((ndim,1))
 
+=======
+>>>>>>> upstream/master

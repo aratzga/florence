@@ -19,6 +19,13 @@ class IdealDielectric(Material):
         self.nature = "linear"
         self.fields = "electrostatics"
 
+<<<<<<< HEAD
+=======
+        if not hasattr(self,'eps_1'):
+            if hasattr(self,'eps'):
+                self.eps_1 = self.eps
+
+>>>>>>> upstream/master
         self.H_VoigtSize = self.ndim
 
         # LOW LEVEL DISPATCHER
@@ -40,7 +47,11 @@ class IdealDielectric(Material):
 
         return np.ascontiguousarray(D), None, np.ascontiguousarray(H_Voigt)
 
+<<<<<<< HEAD
     def Hessian(self,StrainTensors,ElectricDisplacementx,elem=0,gcounter=0):
+=======
+    def Hessian(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
+>>>>>>> upstream/master
         eps_1 = self.eps_1
         I = StrainTensors['I']
         J = StrainTensors['J'][gcounter]
@@ -49,6 +60,12 @@ class IdealDielectric(Material):
         self.dielectric_tensor = -eps_1/J*I
         return self.dielectric_tensor
 
+<<<<<<< HEAD
+=======
+    def CauchyStress(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
+        pass
+
+>>>>>>> upstream/master
     def ElectricDisplacementx(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
         # D = self.legendre_transform.GetElectricDisplacement(self, StrainTensors, ElectricFieldx, elem, gcounter)
         eps_1 = self.eps_1
@@ -57,7 +74,11 @@ class IdealDielectric(Material):
         D_exact = eps_1/J*E
         return D_exact
 
+<<<<<<< HEAD
     def Permittivity(self,StrainTensors,ElectricDisplacementx,elem=0,gcounter=0):
+=======
+    def Permittivity(self,StrainTensors,ElectricFieldx,elem=0,gcounter=0):
+>>>>>>> upstream/master
         eps_1 = self.eps_1
         I = StrainTensors['I']
         J = StrainTensors['J'][gcounter]

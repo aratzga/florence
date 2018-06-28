@@ -3,8 +3,11 @@ import numpy as np, scipy as sp, sys, os, gc
 from warnings import warn
 from time import time
 
+<<<<<<< HEAD
 #just for testing first commit (MAF#just for testing first commit (MAF))
 
+=======
+>>>>>>> upstream/master
 from Florence.QuadratureRules import GaussLobattoQuadrature
 from Florence.QuadratureRules.FeketePointsTri import FeketePointsTri
 from Florence.QuadratureRules.EquallySpacedPoints import EquallySpacedPoints
@@ -24,7 +27,13 @@ class BoundaryCondition(object):
         save_dirichlet_data=False,
         save_nurbs_data=False,
         filename=None,
+<<<<<<< HEAD
         read_dirichlet_from_file=False):
+=======
+        read_dirichlet_from_file=False,
+        make_loading="ramp"
+        ):
+>>>>>>> upstream/master
 
         # TYPE OF BOUNDARY: straight or nurbs
         self.boundary_type = 'straight'
@@ -77,6 +86,11 @@ class BoundaryCondition(object):
         self.is_applied_neumann_shape_functions_computed = False
         self.is_body_force_shape_functions_computed = False
 
+<<<<<<< HEAD
+=======
+        self.make_loading = make_loading # "ramp" or "constant"
+
+>>>>>>> upstream/master
 
         # NODAL FORCES GENERATED BASED ON DIRICHLET OR NEUMANN ARE NOT
         # IMPLEMENTED AS PART OF BOUNDARY CONDITION YET. THIS ESSENTIALLY
@@ -249,12 +263,18 @@ class BoundaryCondition(object):
             if self.read_dirichlet_from_file is False:
 
                 if not self.is_dirichlet_computed:
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
                     # GET DIRICHLET BOUNDARY CONDITIONS BASED ON THE EXACT GEOMETRY FROM CAD
                     if self.requires_cad:
                         # CALL POSTMESH WRAPPER
                         nodesDBC, Dirichlet = self.PostMeshWrapper(formulation, mesh, material, solver, fem_solver)
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
                 else:
                     nodesDBC, Dirichlet = self.nodesDBC, self.Dirichlet
 
@@ -297,6 +317,12 @@ class BoundaryCondition(object):
 
         elif self.boundary_type == 'straight' or self.boundary_type == 'mixed':
             # IF DIRICHLET BOUNDARY CONDITIONS ARE APPLIED DIRECTLY AT NODES
+<<<<<<< HEAD
+=======
+            if self.dirichlet_flags is None:
+                raise RuntimeError("Dirichlet boundary conditions are not set for the analysis")
+
+>>>>>>> upstream/master
             if self.dirichlet_data_applied_at == 'node':
                 if self.analysis_type == "dynamic":
                     # FOR DYNAMIC ANALYSIS IT IS ASSUMED THAT
@@ -335,6 +361,85 @@ class BoundaryCondition(object):
 
 
 
+<<<<<<< HEAD
+=======
+    def ConvertStaticsToDynamics(self, mesh, nincr):
+        """Convert static boundary condition data to dynamic
+        """
+
+        if self.analysis_type == "dynamic":
+            # AVOID ZERO DIVISION FOR RAMP (LINSPACE TYPE) LOADING
+            nincr_last = float(nincr-1) if nincr !=1 else 1
+            if self.boundary_type != "nurbs":
+                if self.dirichlet_flags is not None:
+                    if self.dirichlet_flags.ndim == 2:
+                        dum = np.zeros((self.dirichlet_flags.shape[0],self.dirichlet_flags.shape[1],nincr))
+                        for incr in range(nincr):
+                            if self.make_loading == "constant":
+                                dum[:,:,incr] = self.dirichlet_flags/float(nincr)
+                            else:
+                                dum[:,:,incr] = incr*self.dirichlet_flags/nincr_last
+                        self.dirichlet_flags = np.copy(dum)
+                    else:
+                        return
+            else:
+                if self.applied_dirichlet is not None:
+                    if self.applied_dirichlet.ndim == 1:
+                        dum = np.zeros((self.applied_dirichlet.shape[0],nincr))
+                        for incr in range(nincr):
+                            if self.make_loading == "constant":
+                                dum[:,incr] = self.applied_dirichlet/float(nincr)
+                            else:
+                                dum[:,incr] = incr*self.applied_dirichlet/nincr_last
+                        self.applied_dirichlet = np.copy(dum)
+                    else:
+                        return
+
+
+            if self.neumann_flags is not None:
+
+                ndim = mesh.InferSpatialDimension()
+                if self.neumann_flags.shape[0] == mesh.points.shape[0]:
+                    self.neumann_data_applied_at = "node"
+                else:
+                    if ndim==3:
+                        if self.neumann_flags.shape[0] == mesh.faces.shape[0]:
+                            self.neumann_data_applied_at = "face"
+                    elif ndim==2:
+                        if self.neumann_flags.shape[0] == mesh.edges.shape[0]:
+                            self.neumann_data_applied_at = "face"
+
+                if self.neumann_data_applied_at == "node":
+                    if self.neumann_flags.ndim == 2:
+                        dum = np.zeros((self.neumann_flags.shape[0],self.neumann_flags.shape[1],nincr))
+                        for incr in range(nincr):
+                            if self.make_loading == "constant":
+                                dum[:,:,incr] = self.neumann_flags/float(nincr)
+                            else:
+                                dum[:,:,incr] = incr*self.neumann_flags/nincr_last
+                        self.neumann_flags = np.copy(dum)
+                    else:
+                        return
+                elif self.neumann_data_applied_at == "face":
+                    if self.applied_neumann is None:
+                        raise ValueError("Incorrect Neumann data supplied")
+                    if self.neumann_flags.ndim == 1:
+                        tmp_flags = np.zeros((self.neumann_flags.shape[0],nincr))
+                        tmp_data = np.zeros((self.applied_neumann.shape[0],self.applied_neumann.shape[1],nincr))
+                        for incr in range(nincr):
+                            if self.make_loading == "constant":
+                                tmp_data[:,:,incr] = self.applied_neumann/float(nincr)
+                            else:
+                                tmp_data[:,:,incr] = incr*self.applied_neumann/nincr_last
+                            tmp_flags[:,incr] = self.neumann_flags
+                        self.neumann_flags = np.copy(tmp_flags)
+                        self.applied_neumann = np.copy(tmp_data)
+                    else:
+                        return
+
+
+
+>>>>>>> upstream/master
     def PostMeshWrapper(self, formulation, mesh, material, solver, fem_solver):
         """Calls PostMesh wrapper to get exact Dirichlet boundary conditions"""
 
@@ -342,7 +447,11 @@ class BoundaryCondition(object):
             # from .PostMeshPy import (PostMeshCurvePy as PostMeshCurve, PostMeshSurfacePy as PostMeshSurface)
             from PostMeshPy import (PostMeshCurvePy as PostMeshCurve, PostMeshSurfacePy as PostMeshSurface)
         except ImportError:
+<<<<<<< HEAD
             raise ImportError("PostMesh is not installed. Please install it from 'https://github.com/romeric/PostMesh'")
+=======
+            raise ImportError("PostMesh is not installed. Please install using 'pip install PostMeshPy'")
+>>>>>>> upstream/master
 
         from Florence.FunctionSpace import Tri
 
@@ -637,6 +746,7 @@ class BoundaryCondition(object):
             pboundary_condition.Dirichlet = Dirichlet2D
 
             # GET VARIATIONAL FORMULATION FOR 2D PROBLEM
+<<<<<<< HEAD
             # pformulation_func = getattr(Florence.VariationalPrinciple, type(formulation).__name__, None)
             pformulation_func = formulation.__class__
             pformulation = pformulation_func(pmesh)
@@ -646,6 +756,20 @@ class BoundaryCondition(object):
             if pmesh.points.shape[0] != Dirichlet2D.shape[0]:
                 # CALL THE FEM SOLVER FOR SOLVING THE 2D PROBLEM
                 solution = fem_solver.Solve(formulation=pformulation,
+=======
+            # from Florence import DisplacementFormulation
+            # pformulation = DisplacementFormulation(pmesh)
+            pformulation_func = formulation.__class__
+            pformulation = pformulation_func(pmesh)
+
+            pfem_solver = deepcopy(fem_solver)
+            pfem_solver.do_not_reset = True
+
+            print('Solving planar problem {}. Number of DoF is {}'.format(niter,pmesh.points.shape[0]*pformulation.nvar))
+            if pmesh.points.shape[0] != Dirichlet2D.shape[0]:
+                # CALL THE FEM SOLVER FOR SOLVING THE 2D PROBLEM
+                solution = pfem_solver.Solve(formulation=pformulation,
+>>>>>>> upstream/master
                     mesh=pmesh, material=pmaterial,
                     boundary_condition=pboundary_condition)
                 TotalDisp = solution.sol
@@ -689,10 +813,19 @@ class BoundaryCondition(object):
 
 
 
+<<<<<<< HEAD
     def GetReducedMatrices(self,stiffness,F,mass=None):
 
         # GET REDUCED FORCE VECTOR
         F_b = F[self.columns_in,0]
+=======
+    def GetReducedMatrices(self, stiffness, F, mass=None, only_residual=False):
+
+        # GET REDUCED FORCE VECTOR
+        F_b = F[self.columns_in,0]
+        if only_residual:
+            return F_b
+>>>>>>> upstream/master
 
         # GET REDUCED STIFFNESS MATRIX
         stiffness_b = stiffness[self.columns_in,:][:,self.columns_in]
@@ -762,6 +895,10 @@ class BoundaryCondition(object):
         return F_b, mass_b
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
     def UpdateFixDoFs(self, AppliedDirichletInc, fsize, nvar):
         """Updates the geometry (DoFs) with incremental Dirichlet boundary conditions
             for fixed/constrained degrees of freedom only. Needs to be applied per time steps"""
@@ -823,13 +960,33 @@ class BoundaryCondition(object):
             if not isinstance(function_spaces,tuple):
                 raise ValueError("Boundary functional spaces not available for computing Neumman and body forces")
             else:
+<<<<<<< HEAD
+=======
+                # CHECK IF A FUNCTION SPACE FOR BOUNDARY EXISTS - SAFEGAURDS AGAINST FORMULATIONS THAT DO NO PROVIDE ONE
+>>>>>>> upstream/master
                 has_boundary_spaces = False
                 for fs in function_spaces:
                     if ndim == 3 and fs.ndim == 2:
                         has_boundary_spaces = True
                         break
+<<<<<<< HEAD
                 if not has_boundary_spaces:
                     raise ValueError("Boundary functional spaces not available for computing Neumman and body forces")
+=======
+                    elif ndim == 2 and fs.ndim == 1:
+                        has_boundary_spaces = True
+                        break
+                if not has_boundary_spaces:
+                    from Florence import QuadratureRule, FunctionSpace
+                    # COMPUTE BOUNDARY FUNCTIONAL SPACES
+                    p = mesh.InferPolynomialDegree()
+                    bquadrature = QuadratureRule(optimal=3, norder=2*p+1,
+                        mesh_type=mesh.boundary_element_type, is_flattened=False)
+                    bfunction_space = FunctionSpace(mesh.CreateDummyLowerDimensionalMesh(),
+                        bquadrature, p=p, equally_spaced=mesh.IsEquallySpaced, use_optimal_quadrature=False)
+                    function_spaces = (function_spaces[0],bfunction_space)
+                    # raise ValueError("Boundary functional spaces not available for computing Neumman and body forces")
+>>>>>>> upstream/master
 
             t_tassembly = time()
             if self.analysis_type == "static":
@@ -894,4 +1051,8 @@ class BoundaryCondition(object):
         M = csc_matrix((AppliedDirichlet,
             (columns_out,np.zeros_like(columns_out))),
             shape=(stiffness.shape[1],1))
+<<<<<<< HEAD
         return (stiffness*M).A
+=======
+        return (stiffness*M).A
+>>>>>>> upstream/master

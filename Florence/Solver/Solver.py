@@ -90,10 +90,22 @@ class LinearSolver(object):
         except ImportError:
             self.has_pardiso = False
 
+<<<<<<< HEAD
         self.switcher_message = False
 
         # self.analysis_type = "static"
         # self.analysis_nature = "linear"
+=======
+        self.has_petsc = False
+        try:
+            import petsc4py
+            self.has_petsc = True
+        except ImportError:
+            self.has_petsc = False
+
+        self.switcher_message = False
+
+>>>>>>> upstream/master
 
     def SetSolver(self,linear_solver="direct", linear_solver_type="umfpack",
         apply_preconditioner=False, preconditioner="amg_smoothed_aggregation",
@@ -275,6 +287,7 @@ class LinearSolver(object):
 
                 return sol
 
+<<<<<<< HEAD
                 # CALL JULIA'S MUMPS WRAPPER
                 import h5py
                 from scipy.io import savemat, loadmat
@@ -306,6 +319,8 @@ class LinearSolver(object):
 
                 # REMOVE THE FILES
                 os.remove(pwd+"/JuliaDict.mat")
+=======
+>>>>>>> upstream/master
 
             elif self.solver_subtype == "pardiso" and self.has_pardiso:
                 # NOTE THAT THIS PARDISO SOLVER AUTOMATICALLY SAVES THE RIGHT FACTORISATION
@@ -315,6 +330,10 @@ class LinearSolver(object):
                 sol = pypardiso.spsolve(A,b)
                 print("Pardiso solver time is {}".format(time() - t_solve))
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
             else:
                 # FOR 'super_lu'
                 if A.dtype != np.float64:
@@ -402,6 +421,42 @@ class LinearSolver(object):
 
             print("AMG solver time is {}".format(time() - t_solve))
 
+<<<<<<< HEAD
+=======
+
+
+        elif self.solver_type == "petsc" and self.has_petsc:
+            if self.solver_subtype != "gmres" and self.solver_subtype != "minres" and self.solver_subtype != "cg":
+                self.solver_subtype == "cg"
+            if self.iterative_solver_tolerance < 1e-9:
+                self.iterative_solver_tolerance = 1e-7
+
+            from petsc4py import PETSc
+            t_solve = time()
+            pA = PETSc.Mat().createAIJ(size=A.shape, csr=(A.indptr, A.indices, A.data))
+            pb = PETSc.Vec().createWithArray(b)
+
+            ksp = PETSc.KSP()
+            ksp.create(PETSc.COMM_WORLD)
+            # ksp.create()
+            ksp.setType(self.solver_subtype)
+            ksp.setTolerances(atol=self.iterative_solver_tolerance,
+                    rtol=self.iterative_solver_tolerance)
+            # ILU
+            ksp.getPC().setType('icc')
+
+            # CREATE INITIAL GUESS
+            psol = PETSc.Vec().createWithArray(np.ones(b.shape[0]))
+            # SOLVE
+            ksp.setOperators(pA)
+            ksp.setFromOptions()
+            ksp.solve(pb, psol)
+            sol = psol.getArray()
+
+            # print('Converged in', ksp.getIterationNumber(), 'iterations.')
+            print("Petsc linear iterative solver time is {}".format(time() - t_solve))
+
+>>>>>>> upstream/master
         return sol
 
 

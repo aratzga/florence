@@ -5,7 +5,18 @@ EXT_POSTFIX= so
 CYTHONFLAGS = -DNPY_NO_DEPRECATED_API
 
 CYTHON = cython
+<<<<<<< HEAD
 REMOVE = rm -rf
+=======
+
+ifeq ($(OS),Windows_NT)
+REMOVE = del
+MOVE = move
+else
+REMOVE = rm -rf
+MOVE = mv
+endif
+>>>>>>> upstream/master
 
 INLINE_THRESHOLD = 100000
 CCSTD=-std=c99
@@ -27,11 +38,21 @@ ifeq ($(findstring icc,$(CC)),icc)
 CCFLAGS += -march=native -no-ansi-alias -xHost -fp-model fast=1 -inline-forceinline -inline-factor=$(INLINE_THRESHOLD)
 endif
 
+<<<<<<< HEAD
+=======
+ifeq ($(OS),Windows_NT)
+CCFLAGS += -D_hypot=hypot -m64 -Wno-format-extra-args -Wno-format
+endif
+>>>>>>> upstream/master
 
 all: build_module
 
 build_module: 
+<<<<<<< HEAD
 	@echo echo "Building Jacobi polynomials module"
+=======
+	@echo "Building Jacobi polynomials module"
+>>>>>>> upstream/master
 	$(CYTHON) JacobiPolynomials.pyx
 	$(CC) $(CCSTD) $(CCFLAGS) JacobiPolynomials.c -o JacobiPolynomials.$(EXT_POSTFIX) -I. -I$(PYTHON_INCLUDE_PATH) \
 	-I$(NUMPY_INCLUDE_PATH) -L$(PYTHON_LD_PATH) -l$(PYTHON_VERSION) 

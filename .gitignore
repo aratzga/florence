@@ -57,6 +57,14 @@
 *.pro
 *.user
 
+<<<<<<< HEAD
+=======
+# distutil files
+*build
+*dist
+*Florence.egg-info
+
+>>>>>>> upstream/master
 
 # example files not to ignore
 !examples/curved_mesh_generation/Hollow_Cylinder.*
