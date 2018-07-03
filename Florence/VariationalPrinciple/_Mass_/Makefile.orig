@@ -5,6 +5,10 @@ EXT_POSTFIX= so
 CYTHONFLAGS = -DNPY_NO_DEPRECATED_API
 
 CYTHON = cython --cplus
+<<<<<<< HEAD
+REMOVE = rm -rf
+MOVE = mv
+=======
 
 ifeq ($(OS),Windows_NT)
 REMOVE = del
@@ -13,6 +17,7 @@ else
 REMOVE = rm -rf
 MOVE = mv
 endif
+>>>>>>> upstream/master
 
 INLINE_THRESHOLD = 100000
 CXXSTD=-std=c++11
@@ -46,13 +51,19 @@ ifeq ($(findstring icpc,$(CXX)),icpc)
 CXXFLAGS += -march=native -no-ansi-alias -xHost -fp-model fast=1 -inline-forceinline -inline-factor=$(INLINE_THRESHOLD)
 endif
 
+<<<<<<< HEAD
+=======
 ifeq ($(OS),Windows_NT)
 CXXFLAGS += -D_hypot=hypot -m64 -Wno-format-extra-args -Wno-format
 endif
 
+<<<<<<< HEAD
+>>>>>>> upstream/master
+=======
 FASTOR_OPTFLAGS = -DFASTOR_NO_ALIAS -DFASTOR_USE_VECTORISED_EXPR_ASSIGN -DCONTRACT_OPT=2 -DFASTOR_NO_STATIC_WARNING
 CXXFLAGS += $(FASTOR_OPTFLAGS) -I$(FASTOR_INCLUDE_PATH)
 
+>>>>>>> upstream/master
 all: build_module
 
 build_module:

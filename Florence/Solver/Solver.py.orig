@@ -90,6 +90,12 @@ class LinearSolver(object):
         except ImportError:
             self.has_pardiso = False
 
+<<<<<<< HEAD
+        self.switcher_message = False
+
+        # self.analysis_type = "static"
+        # self.analysis_nature = "linear"
+=======
         self.has_petsc = False
         try:
             import petsc4py
@@ -99,6 +105,7 @@ class LinearSolver(object):
 
         self.switcher_message = False
 
+>>>>>>> upstream/master
 
     def SetSolver(self,linear_solver="direct", linear_solver_type="umfpack",
         apply_preconditioner=False, preconditioner="amg_smoothed_aggregation",
@@ -280,6 +287,40 @@ class LinearSolver(object):
 
                 return sol
 
+<<<<<<< HEAD
+                # CALL JULIA'S MUMPS WRAPPER
+                import h5py
+                from scipy.io import savemat, loadmat
+                pwd = os.path.dirname(os.path.realpath(__file__))
+
+                A = A.tocoo()
+                # SAVE I, J & V TO FILES
+                JuliaDict = {'rowIndA':A.row.astype(np.int64)+1,
+                            'colPtrA':A.col.astype(np.int64)+1,
+                            'valuesA':A.data,'shapeA':A.shape,
+                            'rhs':b}
+
+                savemat(pwd+"/JuliaDict.mat",JuliaDict)
+
+                del A, b
+
+                mumps_failed = False
+                try:
+                    call(["julia",pwd+"/JuliaMUMPS.jl"])
+                except AssertionError:
+                    mumps_failed = True
+
+                if not mumps_failed:
+                    # sol = np.loadtxt(pwd+"/solution")
+                    # os.remove(pwd+"/solution")
+                    sol = h5py.File(pwd+"/solution.mat")['solution']
+                    os.remove(pwd+"/solution.mat")
+
+
+                # REMOVE THE FILES
+                os.remove(pwd+"/JuliaDict.mat")
+=======
+>>>>>>> upstream/master
 
             elif self.solver_subtype == "pardiso" and self.has_pardiso:
                 # NOTE THAT THIS PARDISO SOLVER AUTOMATICALLY SAVES THE RIGHT FACTORISATION
@@ -289,7 +330,10 @@ class LinearSolver(object):
                 sol = pypardiso.spsolve(A,b)
                 print("Pardiso solver time is {}".format(time() - t_solve))
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> upstream/master
             else:
                 # FOR 'super_lu'
                 if A.dtype != np.float64:
@@ -377,6 +421,8 @@ class LinearSolver(object):
 
             print("AMG solver time is {}".format(time() - t_solve))
 
+<<<<<<< HEAD
+=======
 
 
         elif self.solver_type == "petsc" and self.has_petsc:
@@ -410,6 +456,9 @@ class LinearSolver(object):
             # print('Converged in', ksp.getIterationNumber(), 'iterations.')
             print("Petsc linear iterative solver time is {}".format(time() - t_solve))
 
+<<<<<<< HEAD
+>>>>>>> upstream/master
+=======
         else:
             warn("{} solver is not available. Default solver is going to be used".format(self.solver_type))
             # FOR 'super_lu'
@@ -428,6 +477,7 @@ class LinearSolver(object):
                 sol = self.solver_context_manager.solve(b)
 
 
+>>>>>>> upstream/master
         return sol
 
 

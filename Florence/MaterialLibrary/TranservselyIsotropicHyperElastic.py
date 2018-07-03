@@ -63,7 +63,7 @@ class TranservselyIsotropicHyperElastic(Material):
         self.is_transversely_isotropic = True
         self.is_nonisotropic = True
         self.energy_type = "internal_energy"
-        self.nature = "linear"
+        self.nature = "nonlinear"
         self.fields = "mechanics"
 
         if self.ndim==3:

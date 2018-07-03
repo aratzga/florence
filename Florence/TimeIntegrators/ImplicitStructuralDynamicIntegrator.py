@@ -214,7 +214,8 @@ class NonlinearImplicitStructuralDynamicIntegrator(StructuralDynamicIntegrator):
         IncDirichlet = boundary_condition.UpdateFixDoFs(AppliedDirichletInc,
             K.shape[0],formulation.nvar)
         # UPDATE EULERIAN COORDINATE
-        Eulerx += IncDirichlet[:,:formulation.ndim]
+        # Eulerx += IncDirichlet[:,:formulation.ndim]
+        Eulerx[:,:] = mesh.points + IncDirichlet[:,:formulation.ndim]
         Eulerp[:] = IncDirichlet[:,-1] # ENSURES Eulerp IS CONTIGUOUS - NECESSARY FOR LOW-LEVEL DISPATCHER
 
 
@@ -388,7 +389,7 @@ class LinearImplicitStructuralDynamicIntegrator(StructuralDynamicIntegrator):
 
         if formulation.fields == "electro_mechanics":
             M_mech = M[self.mechanical_dofs,:][:,self.mechanical_dofs]
-            if self.include_physical_damping:
+            if fem_solver.include_physical_damping:
                 D_mech = D[self.mechanical_dofs,:][:,self.mechanical_dofs]
         else:
             M_mech = M

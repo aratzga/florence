@@ -317,9 +317,14 @@ class FEMSolver(object):
         if "Explicit" in material.mtype:
             if self.analysis_subtype == "implicit":
                 raise ValueError("Incorrect material model ({}) used for implicit analysis".format(material.mtype))
-        if self.analysis_subtype == "explicit":
-            if self.mass_type is None:
+        if self.mass_type is None:
+            if self.analysis_subtype == "explicit":
                 self.mass_type = "lumped"
+            else:
+                self.mass_type = "consistent"
+        if self.analysis_type == "dynamic" and self.analysis_subtype == "implicit" and self.mass_type == "lumped":
+            warn("Cannot use lumped mass matrix for implicit analysis. Changing to consistent mass matrix")
+            self.mass_type = "consistent"
         if self.analysis_type == "static":
             if self.save_frequency != 1:
 <<<<<<< HEAD
@@ -341,7 +346,8 @@ class FEMSolver(object):
             if self.number_of_load_increments < self.save_frequency:
                 raise ValueError("Number of load increments cannot be less than memory store frequency")
             if self.number_of_load_increments < 3:
-                warn("Time step is excessively large for dynamic analysis. I will increase it by a bit")
+                warn("Number of load steps={} is excessively low for dynamic analysis. "
+                    "I will increase it by a bit".format(self.number_of_load_increments))
                 self.number_of_load_increments = 3
         ##############################################################################
 >>>>>>> upstream/master
@@ -440,6 +446,9 @@ class FEMSolver(object):
         ##############################################################################
         if self.analysis_type == "static" and self.has_contact is True:
             warn("Contact formulation does not get activated under static problems")
+        if self.analysis_type == "dynamic" and self.analysis_nature == "nonlinear" \
+            and self.analysis_subtype == "implicit" and self.has_contact is True:
+            raise ValueError("Implicit contact formulation for nonlinear implicit dynamics is not supported")
         ##############################################################################
 
         ##############################################################################
@@ -651,9 +660,8 @@ class FEMSolver(object):
                 solution.assembly_time = linearised_solver.assembly_time
                 self.__dict__.update(linearised_solver.__dict__)
                 return solution
-            elif self.analysis_type == "dynamic":
+            elif self.analysis_type == "dynamic" and self.analysis_subtype == "explicit":
                 # CONTINUE DOWN FOR EXPLICIT DYNAMIC SOLVER
-                self.analysis_subtype = "explicit"
                 if self.mass_type == None:
                     self.mass_type = "lumped"
                 boundary_condition.ConvertStaticsToDynamics(mesh, self.number_of_load_increments)

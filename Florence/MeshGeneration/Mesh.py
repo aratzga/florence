@@ -85,7 +85,6 @@ class Mesh(object):
         # self.has_meshpy = has_meshpy
 
 
-
     def SetElements(self,arr):
         self.elements = arr
 
@@ -97,6 +96,13 @@ class Mesh(object):
 
     def SetFaces(self,arr):
         self.faces = arr
+
+
+    def GetElements(self):
+        return self.elements
+
+    def GetPoints(self):
+        return self.points
 
     def GetEdges(self):
         assert self.element_type is not None
@@ -110,6 +116,7 @@ class Mesh(object):
             self.GetEdgesHex()
         else:
             raise ValueError('Type of element not understood')
+        return self.all_edges
 
     def GetBoundaryEdges(self):
         assert self.element_type is not None
@@ -123,6 +130,7 @@ class Mesh(object):
             self.GetBoundaryEdgesHex()
         else:
             raise ValueError('Type of element not understood')
+        return self.edges
 
     def GetInteriorEdges(self):
         assert self.element_type is not None
@@ -136,6 +144,7 @@ class Mesh(object):
             self.GetInteriorEdgesHex()
         else:
             raise ValueError('Type of element not understood')
+        return self.interior_edges
 
     def GetFaces(self):
         assert self.element_type is not None
@@ -147,6 +156,7 @@ class Mesh(object):
             raise ValueError("2D mesh does not have faces")
         else:
             raise ValueError('Type of element not understood')
+        return self.all_faces
 
     def GetBoundaryFaces(self):
         assert self.element_type is not None
@@ -158,6 +168,7 @@ class Mesh(object):
             raise ValueError("2D mesh does not have faces")
         else:
             raise ValueError('Type of element not understood')
+        return self.faces
 
     def GetInteriorFaces(self):
         assert self.element_type is not None
@@ -169,6 +180,7 @@ class Mesh(object):
             raise ValueError("2D mesh does not have faces")
         else:
             raise ValueError('Type of element not understood')
+        return self.interior_faces
 
     def GetElementsEdgeNumbering(self):
         assert self.element_type is not None
@@ -178,6 +190,7 @@ class Mesh(object):
             return self.GetElementsEdgeNumberingQuad()
         else:
             raise ValueError('Type of element not understood')
+        return self.edge_to_element
 
     def GetElementsWithBoundaryEdges(self):
         assert self.element_type is not None
@@ -187,6 +200,7 @@ class Mesh(object):
             return self.GetElementsWithBoundaryEdgesQuad()
         else:
             raise ValueError('Type of element not understood')
+        return self.boundary_edge_to_element
 
     def GetElementsFaceNumbering(self):
         assert self.element_type is not None
@@ -198,6 +212,7 @@ class Mesh(object):
             raise ValueError("2D mesh does not have faces")
         else:
             raise ValueError('Type of element not understood')
+        return self.face_to_element
 
     def GetElementsWithBoundaryFaces(self):
         assert self.element_type is not None
@@ -209,6 +224,7 @@ class Mesh(object):
             raise ValueError("2D mesh does not have faces")
         else:
             raise ValueError('Type of element not understood')
+        return self.boundary_face_to_element
 
 
     @property
@@ -3676,6 +3692,11 @@ class Mesh(object):
         left_point = float(left_point)
         right_point = float(right_point)
 
+        n = int(n)
+        if n <= 0:
+            raise ValueError("Number of discretisation cannot be zero or negative: n={}".format(n))
+
+
         self.element_type = "line"
         self.points = np.linspace(left_point,right_point,p*n+1)[:,None]
         self.elements = np.zeros((n,p+1),dtype=np.int64)
@@ -3698,6 +3719,11 @@ class Mesh(object):
         if (lower_left_point[0] > upper_right_point[0]) or \
             (lower_left_point[1] > upper_right_point[1]):
             raise ValueError("Incorrect coordinate for lower left and upper right vertices")
+
+        nx, ny = int(nx), int(ny)
+        if nx <= 0 or ny <= 0:
+            raise ValueError("Number of discretisation cannot be zero or negative: nx={} ny={}".format(nx,ny))
+
 
 
         from scipy.spatial import Delaunay
@@ -4449,6 +4475,10 @@ class Mesh(object):
             (lower_left_rear_point[1] > upper_right_front_point[1]) or \
             (lower_left_rear_point[2] > upper_right_front_point[2]):
             raise ValueError("Incorrect coordinate for lower left rear and upper right front vertices")
+
+        nx, ny, nz = int(nx), int(ny), int(nz)
+        if nx <= 0 or ny <= 0 or nz <= 0:
+            raise ValueError("Number of discretisation cannot be zero or negative: nx={} ny={} nz={}".format(nx,ny,nz))
 
 
         x=np.linspace(lower_left_rear_point[0],upper_right_front_point[0],nx+1)

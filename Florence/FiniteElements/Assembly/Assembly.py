@@ -6,18 +6,9 @@ from time import time
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 
-<<<<<<< HEAD
-from .SparseAssembly import SparseAssembly_Step_2
-from .SparseAssemblySmall import SparseAssemblySmall
-from ._LowLevelAssembly_ import _LowLevelAssembly_, _LowLevelAssemblyExplicit_, _LowLevelAssemblyLaplacian_
-
-import pyximport
-pyximport.install(setup_args={'include_dirs': np.get_include()})
-=======
 from ._LowLevelAssembly_ import _LowLevelAssembly_, _LowLevelAssemblyExplicit_, _LowLevelAssemblyLaplacian_
 from ._LowLevelAssembly_ import _LowLevelAssembly_Par_, _LowLevelAssemblyExplicit_Par_
 
->>>>>>> upstream/master
 from .SparseAssemblyNative import SparseAssemblyNative
 from .RHSAssemblyNative import RHSAssemblyNative
 
@@ -84,29 +75,46 @@ def LowLevelAssembly(fem_solver, function_space, formulation, mesh, material, Eu
         fem_solver.assembly_time = time() - t_assembly
         return stiffness, T[:,None], None, None
 
-<<<<<<< HEAD
-    stiffness, T, F, mass = _LowLevelAssembly_(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp)
-=======
+    # HACK TO DISPATCH TO EFFICIENT MASS MATRIX COMUTATION
+    ll_failed = False
+    M = []
+    if fem_solver.analysis_type != "static" and fem_solver.is_mass_computed is False:
+        try:
+            t_mass_assembly = time()
+            from Florence.VariationalPrinciple._MassIntegrand_ import __ExplicitConstantMassIntegrand__
+            I_mass, J_mass, V_mass = __ExplicitConstantMassIntegrand__(mesh, function_space, formulation, fem_solver.mass_type)[1:]
+            M = csr_matrix((V_mass,(I_mass,J_mass)),shape=((formulation.nvar*mesh.points.shape[0],
+                    formulation.nvar*mesh.points.shape[0])),dtype=np.float64)
+            if M is not None:
+                fem_solver.is_mass_computed = True
+            t_mass_assembly = time() - t_mass_assembly
+            print("Assembled mass matrix. Time elapsed was {} seconds".format(t_mass_assembly))
+        except ImportError:
+            # CONTINUE DOWN
+            warn("Low level mass assembly not available. Falling back to python version")
+            ll_failed = True
+
+
     if fem_solver.parallel:
         stiffness, T, F, mass = ImplicitParallelLauncher(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp)
     else:
         stiffness, T, F, mass = _LowLevelAssembly_(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp)
 
->>>>>>> upstream/master
     if isinstance(F,np.ndarray):
         F = F[:,None]
-    if mass is not None:
-        fem_solver.is_mass_computed = True
+    # SET FLAG AGAIN - NECESSARY
+    if ll_failed:
+        if mass is not None:
+            fem_solver.is_mass_computed = True
+    else:
+        mass = M
 
     fem_solver.assembly_time = time() - t_assembly
 
     return stiffness, T[:,None], F, mass
 
 
-<<<<<<< HEAD
-=======
 
->>>>>>> upstream/master
 def AssemblySmall(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp):
 
     t_assembly = time()
@@ -125,11 +133,7 @@ def AssemblySmall(fem_solver, function_space, formulation, mesh, material, Euler
     V_stiffness=np.zeros(int((nvar*nodeperelem)**2*nelem),dtype=np.float64)
 
     I_mass=[]; J_mass=[]; V_mass=[]
-<<<<<<< HEAD
-    if fem_solver.analysis_type !='static':
-=======
     if fem_solver.analysis_type !='static' and fem_solver.is_mass_computed is False:
->>>>>>> upstream/master
         # ALLOCATE VECTORS FOR SPARSE ASSEMBLY OF MASS MATRIX - CHANGE TYPES TO INT64 FOR DoF > 1e09
         I_mass=np.zeros(int((nvar*nodeperelem)**2*nelem),dtype=np.int32)
         J_mass=np.zeros(int((nvar*nodeperelem)**2*nelem),dtype=np.int32)
@@ -222,123 +226,6 @@ def AssemblySmall(fem_solver, function_space, formulation, mesh, material, Euler
 
 
 
-<<<<<<< HEAD
-#-------------- ASSEMBLY ROUTINE FOR RELATIVELY LARGER MATRICES ( 1e06 < NELEM < 1e07 3D)------------------------#
-#----------------------------------------------------------------------------------------------------------------#
-
-def AssemblyLarge(MainData,mesh,material,Eulerx,TotalPot):
-
-    # GET MESH DETAILS
-    C = MainData.C
-    nvar = MainData.nvar
-    ndim = MainData.ndim
-
-    # nelem = mesh.elements.shape[0]
-    nelem = mesh.nelem
-    nodeperelem = mesh.elements.shape[1]
-
-    from tempfile import mkdtemp
-
-    # WRITE TRIPLETS ON DESK
-    pwd = os.path.dirname(os.path.realpath(__file__))
-    tmp_dir = mkdtemp()
-    I_filename = os.path.join(tmp_dir, 'I_stiffness.dat')
-    J_filename = os.path.join(tmp_dir, 'J_stiffness.dat')
-    V_filename = os.path.join(tmp_dir, 'V_stiffness.dat')
-
-    # ALLOCATE VECTORS FOR SPARSE ASSEMBLY OF STIFFNESS MATRIX
-    I_stiffness = np.memmap(I_filename,dtype=np.int32,mode='w+',shape=((nvar*nodeperelem)**2*nelem,))
-    J_stiffness = np.memmap(J_filename,dtype=np.int32,mode='w+',shape=((nvar*nodeperelem)**2*nelem,))
-    V_stiffness = np.memmap(V_filename,dtype=np.float32,mode='w+',shape=((nvar*nodeperelem)**2*nelem,))
-
-    # I_stiffness=np.zeros((nvar*nodeperelem)**2*nelem,dtype=np.int64)
-    # J_stiffness=np.zeros((nvar*nodeperelem)**2*nelem,dtype=np.int64)
-    # V_stiffness=np.zeros((nvar*nodeperelem)**2*nelem,dtype=np.float64)
-
-    # THE I & J VECTORS OF LOCAL STIFFNESS MATRIX DO NOT CHANGE, HENCE COMPUTE THEM ONCE
-    I_stiff_elem = np.repeat(np.arange(0,nvar*nodeperelem),nvar*nodeperelem,axis=0)
-    J_stiff_elem = np.tile(np.arange(0,nvar*nodeperelem),nvar*nodeperelem)
-
-    I_mass=[];J_mass=[];V_mass=[]; I_mass_elem = []; J_mass_elem = []
-    if MainData.Analysis !='Static':
-        # ALLOCATE VECTORS FOR SPARSE ASSEMBLY OF MASS MATRIX
-        I_mass=np.zeros((nvar*nodeperelem)**2*mesh.elements.shape[0],dtype=np.int64)
-        J_mass=np.zeros((nvar*nodeperelem)**2*mesh.elements.shape[0],dtype=np.int64)
-        V_mass=np.zeros((nvar*nodeperelem)**2*mesh.elements.shape[0],dtype=np.float64)
-
-        # THE I & J VECTORS OF LOCAL MASS MATRIX DO NOT CHANGE, HENCE COMPUTE THEM ONCE
-        I_mass_elem = np.repeat(np.arange(0,nvar*nodeperelem),nvar*nodeperelem,axis=0)
-        J_mass_elem = np.tile(np.arange(0,nvar*nodeperelem),nvar*nodeperelem)
-
-
-    # ALLOCATE RHS VECTORS
-    F = np.zeros((mesh.points.shape[0]*nvar,1))
-    T =  np.zeros((mesh.points.shape[0]*nvar,1))
-    # ASSIGN OTHER NECESSARY MATRICES
-    full_current_row_stiff = []; full_current_column_stiff = []; coeff_stiff = []
-    full_current_row_mass = []; full_current_column_mass = []; coeff_mass = []
-    mass = []
-
-    if MainData.Parallel:
-        # COMPUATE ALL LOCAL ELEMENTAL MATRICES (STIFFNESS, MASS, INTERNAL & EXTERNAL TRACTION FORCES )
-        ParallelTuple = parmap.map(GetElementalMatrices,np.arange(0,nelem),MainData,mesh.elements,mesh.points,nodeperelem,
-            Eulerx,TotalPot,I_stiff_elem,J_stiff_elem,I_mass_elem,J_mass_elem,pool=MP.Pool(processes=MainData.nCPU))
-
-    for elem in range(nelem):
-
-        if MainData.Parallel:
-            # UNPACK PARALLEL TUPLE VALUES
-            full_current_row_stiff = ParallelTuple[elem][0]; full_current_column_stiff = ParallelTuple[elem][1]
-            coeff_stiff = ParallelTuple[elem][2]; t = ParallelTuple[elem][3]; f = ParallelTuple[elem][4]
-            full_current_row_mass = ParallelTuple[elem][5]; full_current_column_mass = ParallelTuple[elem][6]; coeff_mass = ParallelTuple[elem][6]
-
-        else:
-            # COMPUATE ALL LOCAL ELEMENTAL MATRICES (STIFFNESS, MASS, INTERNAL & EXTERNAL TRACTION FORCES )
-            full_current_row_stiff, full_current_column_stiff, coeff_stiff, t, f, \
-            full_current_row_mass, full_current_column_mass, coeff_mass = GetElementalMatrices(elem,
-                MainData,mesh.elements,mesh.points,nodeperelem,Eulerx,TotalPot,I_stiff_elem,J_stiff_elem,I_mass_elem,J_mass_elem)
-
-        # SPARSE ASSEMBLY - STIFFNESS MATRIX
-        # I_stiffness, J_stiffness, V_stiffness = SparseAssembly_Step_2(I_stiffness,J_stiffness,V_stiffness,
-            # full_current_row_stiff,full_current_column_stiff,coeff_stiff,
-        #   nvar,nodeperelem,elem)
-
-        I_stiffness[(nvar*nodeperelem)**2*elem:(nvar*nodeperelem)**2*(elem+1)] = full_current_row_stiff
-        J_stiffness[(nvar*nodeperelem)**2*elem:(nvar*nodeperelem)**2*(elem+1)] = full_current_column_stiff
-        V_stiffness[(nvar*nodeperelem)**2*elem:(nvar*nodeperelem)**2*(elem+1)] = coeff_stiff
-
-        if MainData.Analysis != 'Static':
-            # SPARSE ASSEMBLY - MASS MATRIX
-            I_mass, J_mass, V_mass = SparseAssembly_Step_2(I_mass,J_mass,V_mass,full_current_row_mass,full_current_column_mass,coeff_mass,
-                nvar,nodeperelem,elem)
-
-        if fem_solver.has_moving_boundary:
-            # RHS ASSEMBLY
-            for iterator in range(0,nvar):
-                F[mesh.elements[elem,:]*nvar+iterator,0]+=f[iterator::nvar]
-        # INTERNAL TRACTION FORCE ASSEMBLY
-        for iterator in range(0,nvar):
-                T[mesh.elements[elem,:]*nvar+iterator,0]+=t[iterator::nvar,0]
-
-    # CALL BUILT-IN SPARSE ASSEMBLER
-    stiffness = coo_matrix((V_stiffness,(I_stiffness,J_stiffness)),
-        shape=((nvar*mesh.points.shape[0],nvar*mesh.points.shape[0])),dtype=np.float64).tocsc()
-
-    # GET STORAGE/MEMORY DETAILS
-    fem_solver.spmat = stiffness.data.nbytes/1024./1024.
-    fem_solver.ijv = (I_stiffness.nbytes + J_stiffness.nbytes + V_stiffness.nbytes)/1024./1024.
-    del I_stiffness, J_stiffness, V_stiffness
-    gc.collect()
-
-    if fem_solver.analysis_type != 'static':
-        # CALL BUILT-IN SPARSE ASSEMBLER
-        mass = coo_matrix((V_mass,(I_mass,J_mass)),shape=((nvar*mesh.points.shape[0],nvar*mesh.points.shape[0]))).tocsc()
-
-
-    return stiffness, T, F, mass
-
-=======
->>>>>>> upstream/master
 
 def OutofCoreAssembly(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp, calculate_rhs=True, filename=None, chunk_size=None):
 # def OutofCoreAssembly(MainData, mesh, material, Eulerx, TotalPot, calculate_rhs=True, filename=None, chunk_size=None):
@@ -354,11 +241,7 @@ def OutofCoreAssembly(fem_solver, function_space, formulation, mesh, material, E
     from time import time
     try:
         import psutil
-<<<<<<< HEAD
-    except IOError:
-=======
     except ImportError:
->>>>>>> upstream/master
         has_psutil = False
         raise ImportError("No module named psutil. Please install it using 'pip install psutil'")
     # from Core.Supplementary.dsparse.sparse import dok_matrix
@@ -554,13 +437,6 @@ def AssembleInternalTractionForces(fem_solver, function_space, formulation, mesh
 
 
 
-<<<<<<< HEAD
-
-
-
-
-=======
->>>>>>> upstream/master
 #------------------------------- ASSEMBLY ROUTINE FOR EXTERNAL TRACTION FORCES ----------------------------------#
 #----------------------------------------------------------------------------------------------------------------#
 
@@ -701,70 +577,6 @@ def AssembleBodyForces(boundary_condition, mesh, material, function_space):
 
 
 
-<<<<<<< HEAD
-
-
-
-
-# def AssembleExplicit(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp):
-
-#     # GET MESH DETAILS
-#     C = mesh.InferPolynomialDegree() - 1
-#     nvar = formulation.nvar
-#     ndim = formulation.ndim
-#     nelem = mesh.nelem
-#     nodeperelem = mesh.elements.shape[1]
-
-#     T = np.zeros((mesh.points.shape[0]*nvar,1),np.float64)
-#     M = np.zeros((mesh.points.shape[0]*nvar,1),np.float64)
-
-#     mass, F = [], []
-#     if fem_solver.has_moving_boundary:
-#         F = np.zeros((mesh.points.shape[0]*nvar,1),np.float64)
-
-
-#     for elem in range(nelem):
-
-#         t, f, mass = formulation.GetElementalMatricesInVectorForm(elem,
-#                 function_space, mesh, material, fem_solver, Eulerx, Eulerp)
-
-#         if fem_solver.has_moving_boundary:
-#             # RHS ASSEMBLY
-#             RHSAssemblyNative(F,f,elem,nvar,nodeperelem,mesh.elements)
-
-#         # LUMPED MASS ASSEMBLY
-#         if fem_solver.analysis_type != 'static' and fem_solver.is_mass_computed==False:
-#             RHSAssemblyNative(M,mass,elem,nvar,nodeperelem,mesh.elements)
-
-#         # INTERNAL TRACTION FORCE ASSEMBLY
-#         RHSAssemblyNative(T,t,elem,nvar,nodeperelem,mesh.elements)
-
-#     if fem_solver.analysis_type != 'static' and fem_solver.is_mass_computed==False:
-#         fem_solver.is_mass_computed = True
-
-#     return T, F, M
-
-
-
-
-
-
-def AssembleExplicit(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp):
-
-    if fem_solver.has_low_level_dispatcher and fem_solver.is_mass_computed is True:
-
-        if not material.has_low_level_dispatcher:
-            raise RuntimeError("Cannot dispatch to low level module, since material {} does not support it".format(type(material).__name__))
-
-        T, F, M = _LowLevelAssemblyExplicit_(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp)
-        if isinstance(F,np.ndarray):
-            F = F[:,None]
-        if M is not None:
-            fem_solver.is_mass_computed = True
-
-        return T[:,None], F, M
-
-=======
 #---------------------------------------- EXPLICIT ASSEMBLY ROUTINES --------------------------------------------#
 #----------------------------------------------------------------------------------------------------------------#
 
@@ -832,6 +644,25 @@ def AssembleExplicit(fem_solver, function_space, formulation, mesh, material, Eu
         else:
             return AssembleExplicit_NoLLD(fem_solver, function_space, formulation, mesh, material, Eulerx, Eulerp)
 
+        if fem_solver.has_low_level_dispatcher:
+            try:
+                t_mass_assembly = time()
+                from Florence.VariationalPrinciple._MassIntegrand_ import __ExplicitConstantMassIntegrand__
+                M, I_mass, J_mass, V_mass = __ExplicitConstantMassIntegrand__(mesh, function_space, formulation, fem_solver.mass_type)
+
+                if fem_solver.mass_type == "consistent":
+                    M = csr_matrix((V_mass,(I_mass,J_mass)),shape=((formulation.nvar*mesh.points.shape[0],
+                        formulation.nvar*mesh.points.shape[0])),dtype=np.float64)
+                # SET MASS FLAG HERE
+                if fem_solver.is_mass_computed is False:
+                    fem_solver.is_mass_computed = True
+                t_mass_assembly = time() - t_mass_assembly
+                print("Assembled mass matrix. Time elapsed was {} seconds".format(t_mass_assembly))
+                return T[:,None], [], M
+            except ImportError:
+                # CONTINUE DOWN
+                warn("Low level mass assembly not available. Falling back to python version")
+
 
         # GET MESH DETAILS
         nvar = formulation.nvar
@@ -878,7 +709,7 @@ def AssembleExplicit(fem_solver, function_space, formulation, mesh, material, Eu
         if fem_solver.is_mass_computed is False:
             if fem_solver.mass_type == "consistent":
                 M = csr_matrix((V_mass,(I_mass,J_mass)),shape=((nvar*mesh.points.shape[0],
-                nvar*mesh.points.shape[0])),dtype=np.float64)
+                    nvar*mesh.points.shape[0])),dtype=np.float64)
             fem_solver.is_mass_computed = True
 
 
@@ -923,80 +754,11 @@ def ImplicitParallelLauncher(fem_solver, function_space, formulation, mesh, mate
 
     from multiprocessing import Process, Pool, Manager, Queue
     from contextlib import closing
->>>>>>> upstream/master
 
     # GET MESH DETAILS
     nvar = formulation.nvar
     ndim = formulation.ndim
     nelem = mesh.nelem
-<<<<<<< HEAD
-    nodeperelem = mesh.elements.shape[1]
-
-    T = np.zeros((mesh.points.shape[0]*nvar,1),np.float64)
-
-    I_mass=[]; J_mass=[]; V_mass=[]
-    if fem_solver.analysis_type !='static' and fem_solver.mass_type == "consistent":
-        # ALLOCATE VECTORS FOR SPARSE ASSEMBLY OF MASS MATRIX - CHANGE TYPES TO INT64 FOR DoF > 1e09
-        I_mass=np.zeros(int((nvar*nodeperelem)**2*nelem),dtype=np.int32)
-        J_mass=np.zeros(int((nvar*nodeperelem)**2*nelem),dtype=np.int32)
-        V_mass=np.zeros(int((nvar*nodeperelem)**2*nelem),dtype=np.float64)
-        M = []
-    else:
-        M = np.zeros((mesh.points.shape[0]*nvar,1),np.float64)
-
-    F = []
-    if fem_solver.has_moving_boundary:
-        F = np.zeros((mesh.points.shape[0]*nvar,1),np.float64)
-
-    if fem_solver.parallel:
-        # from joblib import Parallel, delayed
-        # Parallel(n_jobs=2)(delayed(funcer)(elem, nvar,
-        #     nodeperelem, T, F, M, formulation, function_space, mesh, material,
-        #     fem_solver, Eulerx, Eulerp) for elem in range(0,nelem))
-
-        parmap.map(AssembleExplicitFunctor,np.arange(0,nelem,dtype=np.int32),
-            nvar, nodeperelem, T, F, I_mass, J_mass, V_mass, M, formulation, function_space, mesh, material,
-            fem_solver, Eulerx, Eulerp, processes= int(multiprocessing.cpu_count()))
-    else:
-        for elem in range(nelem):
-            AssembleExplicitFunctor(elem, nvar, nodeperelem, T, F, I_mass, J_mass, V_mass, M, formulation,
-                function_space, mesh, material, fem_solver, Eulerx, Eulerp)
-
-    # SET MASS FLAG HERE
-    if fem_solver.analysis_type != 'static' and fem_solver.is_mass_computed==False:
-        if fem_solver.mass_type == "consistent":
-            M = csr_matrix((V_mass,(I_mass,J_mass)),shape=((nvar*mesh.points.shape[0],
-            nvar*mesh.points.shape[0])),dtype=np.float64)
-        fem_solver.is_mass_computed = True
-
-
-    return T, F, M
-
-
-def AssembleExplicitFunctor(elem, nvar, nodeperelem, T, F, I_mass, J_mass, V_mass, M,
-    formulation, function_space, mesh, material, fem_solver, Eulerx, Eulerp):
-
-    t, f, mass = formulation.GetElementalMatricesInVectorForm(elem,
-            function_space, mesh, material, fem_solver, Eulerx, Eulerp)
-
-
-    if fem_solver.has_moving_boundary:
-        # RHS ASSEMBLY
-        RHSAssemblyNative(F,f,elem,nvar,nodeperelem,mesh.elements)
-    # INTERNAL TRACTION FORCE ASSEMBLY
-    RHSAssemblyNative(T,t,elem,nvar,nodeperelem,mesh.elements)
-
-    # LUMPED MASS ASSEMBLY
-    if fem_solver.analysis_type != 'static' and fem_solver.is_mass_computed==False:
-        # MASS ASSEMBLY
-        if fem_solver.mass_type == "lumped":
-            RHSAssemblyNative(M,mass,elem,nvar,nodeperelem,mesh.elements)
-        else:
-            # SPARSE ASSEMBLY - MASS MATRIX
-            I_mass_elem, J_mass_elem, V_mass_elem = formulation.FindIndices(mass)
-            SparseAssemblyNative(I_mass_elem,J_mass_elem,V_mass_elem,I_mass,J_mass,V_mass,
-                elem,nvar,nodeperelem,mesh.elements)
-=======
     nnode = mesh.points.shape[0]
     nodeperelem = mesh.elements.shape[1]
     local_capacity = int((nvar*nodeperelem)**2)
@@ -1411,4 +1173,3 @@ def ExplicitParallelLauncher(fem_solver, function_space, formulation, mesh, mate
 
 
     return T_all.ravel()
->>>>>>> upstream/master
